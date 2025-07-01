@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+langchain-community
+langchain-openai
+langgraph
+pydantic
+python-dotenv
+semantic-chunkers
+semantic-router
+tavily-python
