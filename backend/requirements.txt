@@ -8,3 +8,4 @@ python-dotenv
 semantic-chunkers
 semantic-router
 tavily-python
+python-multipart
