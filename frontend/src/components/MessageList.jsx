@@ -15,20 +15,18 @@ const MessageList = ({ messages, isLoading, isEmpty }) => {
 
   if (isEmpty) {
     return (
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
-          <div className="bg-gray-800 p-6 rounded-full">
-            <Bot className="w-16 h-16 text-white" />
-          </div>
-          <h2 className="text-2xl font-medium mb-2">Hello</h2>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-2">
+        <div className="max-w-3xl mx-auto flex flex-col items-center justify-center h-full text-center">
+            <h2 className="text-4xl font-bold text-gray-300 mb-2">Welcome!</h2>
+            <p className="text-lg text-gray-500 mb-8">Learn new concepts or deepen your understanding of existing knowledge</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden p-2">
+      <div className="max-w-3xl mx-auto">
         {messages.map((message, index) => (
           <Message key={message.id} message={message} index={index} />
         ))}

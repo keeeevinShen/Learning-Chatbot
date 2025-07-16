@@ -1,15 +1,16 @@
 // src/components/Sidebar.jsx
 
 import React from 'react';
-import { Plus, Search, Book, MessageSquare, User, X, Menu } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, Search, Book, MessageSquare, User, X, Menu, UploadCloud } from 'lucide-react';
 
-const Sidebar = ({ 
-  isOpen, 
-  chats, 
-  activeChat, 
-  searchQuery, 
-  onSearchChange, 
-  onChatSelect, 
+const Sidebar = ({
+  isOpen,
+  chats,
+  activeChat,
+  searchQuery,
+  onSearchChange,
+  onChatSelect,
   onNewChat,
   onDeleteChat,
   onToggleSidebar
@@ -19,29 +20,26 @@ const Sidebar = ({
   );
 
   return (
-    <div className={`${isOpen ? 'w-64' : 'w-16'} transition-all duration-300 bg-gray-800 border-r border-gray-700 flex flex-col overflow-hidden`}>
-      {/* Menu Toggle Button - Always Visible */}
-      <div className="p-4">
-        <button
-          onClick={onToggleSidebar}
-          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-      </div>
+    <>
+      {/* Menu Toggle Button - Fixed Position */}
+      <button
+        onClick={onToggleSidebar}
+        className="fixed top-4 left-4 z-50 p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors shadow-lg"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
+      <div className={`${isOpen ? 'w-64' : 'w-16'} transition-all duration-300 bg-gray-800 border-r border-gray-700 flex flex-col overflow-hidden`}>
+        {/* Spacer for the fixed menu button */}
+        <div className="h-12"></div>
+
+        {/* Navigation Links */}
+        <div className="px-4 py-2 space-y-1">
+        </div>
 
       {/* Collapsible Content */}
       <div className={isOpen ? 'transition-opacity duration-500 opacity-100' : 'opacity-0 pointer-events-none'}>
         <div className="px-4 pb-4 space-y-4">
-          {/* New Chat Button */}
-          <button
-            onClick={onNewChat}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            <span>New Chat</span>
-          </button>
-
           {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
@@ -53,16 +51,17 @@ const Sidebar = ({
               className="w-full pl-10 pr-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
             />
           </div>
-        </div>
-      </div>
 
-      {/* Navigation Links */}
-      <div className={`px-4 py-2 space-y-1 ${isOpen ? 'transition-opacity duration-500 opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-gray-100 hover:bg-gray-800 rounded-lg transition-colors">
-            <Book className="w-4 h-4" />
-            <span>upload courses material or lecture link</span>
+          {/* New Chat Button */}
+          <button
+            onClick={onNewChat}
+            className="w-full flex items-center justify-start gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            <span>New Chat</span>
           </button>
         </div>
+      </div>
 
       {/* Chat History */}
       <div className={`flex-1 overflow-y-auto px-4 py-2 ${isOpen ? 'transition-opacity duration-500 opacity-100' : 'opacity-0 pointer-events-none'}`}>
@@ -101,6 +100,7 @@ const Sidebar = ({
         </button>
       </div>
     </div>
+    </>
   );
 };
 

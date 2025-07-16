@@ -1,17 +1,27 @@
 // src/components/MessageInput.jsx
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Paperclip, Send, BookOpen, Plus, X, FileText, AlertCircle } from 'lucide-react';
+import { Paperclip, Send, BookOpen, Plus, X, FileText, AlertCircle, ChevronDown, Check, Brain } from 'lucide-react';
 import ImportLectureModal from './ImportLectureModal';
+
+const models = [
+  "Gemini 2.5 pro",
+  "Claude Sonnet 4",
+  "Grok 3"
+];
 
 const MessageInput = ({ onSendMessage, isLoading }) => {
   const [inputValue, setInputValue] = useState('');
   const [isMenuOpen, setMenuOpen] = useState(false);
+  const [isModelMenuOpen, setModelMenuOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState(models[0]);
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [fileError, setFileError] = useState('');
+  const [feynmanMode, setFeynmanMode] = useState(false);
   const textareaRef = useRef(null);
   const menuRef = useRef(null);
+  const modelMenuRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const MAX_FILES = 5;
@@ -29,6 +39,9 @@ const MessageInput = ({ onSendMessage, isLoading }) => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(false);
+      }
+      if (modelMenuRef.current && !modelMenuRef.current.contains(event.target)) {
+        setModelMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -116,37 +129,37 @@ const MessageInput = ({ onSendMessage, isLoading }) => {
   };
 
   return (
-    <div className="border-t border-gray-800 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="p-2">
+      <div className="max-w-3xl mx-auto">
         {/* File error message */}
         {fileError && (
-          <div className="mb-3 flex items-center gap-2 bg-red-900/50 border border-red-700 rounded-lg p-3">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-            <span className="text-sm text-red-200">{fileError}</span>
+          <div className="mb-2 flex items-center gap-2 bg-red-900/50 border border-red-700 rounded-lg p-2">
+            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+            <span className="text-xs text-red-200">{fileError}</span>
           </div>
         )}
 
         {/* Selected files display */}
         {selectedFiles.length > 0 && (
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-400">
+          <div className="mb-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-gray-400">
                 Selected files ({selectedFiles.length}/{MAX_FILES})
               </span>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {selectedFiles.map((file, index) => (
-                <div key={index} className="flex items-center gap-2 bg-gray-800 rounded-lg p-2">
-                  <FileText className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm text-gray-300 flex-1">
+                <div key={index} className="flex items-center gap-2 bg-gray-800 rounded-lg p-1.5">
+                  <FileText className="w-3 h-3 text-blue-400" />
+                  <span className="text-xs text-gray-300 flex-1">
                     {file.name} ({formatFileSize(file.size)})
                   </span>
                   <button
                     type="button"
                     onClick={() => removeFile(index)}
-                    className="p-1 hover:bg-gray-700 rounded-full transition-colors"
+                    className="p-0.5 hover:bg-gray-700 rounded-full transition-colors"
                   >
-                    <X className="w-4 h-4 text-gray-400" />
+                    <X className="w-3 h-3 text-gray-400" />
                   </button>
                 </div>
               ))}
@@ -154,44 +167,17 @@ const MessageInput = ({ onSendMessage, isLoading }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex items-end gap-2 bg-gray-800 rounded-lg p-2">
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setMenuOpen(prev => !prev)}
-              className="p-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
-            {isMenuOpen && (
-              <div
-                className="absolute bottom-full left-0 mb-2 w-48 bg-gray-900 rounded-lg shadow-lg text-white"
-              >
-                <ul className="py-1">
-                  <li
-                    className="flex items-center gap-3 px-4 py-2 hover:bg-gray-800 cursor-pointer"
-                    onClick={() => {
-                      setModalOpen(true);
-                      setMenuOpen(false);
-                    }}
-                  >
-                    <BookOpen className="w-5 h-5 text-gray-400" />
-                    <span>Import lecture</span>
-                  </li>
-                  <li 
-                    className={`flex items-center gap-3 px-4 py-2 hover:bg-gray-800 cursor-pointer ${
-                      selectedFiles.length >= MAX_FILES ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                    onClick={handleFileUploadClick}
-                  >
-                    <Paperclip className="w-5 h-5 text-gray-400" />
-                    <span>Upload files {selectedFiles.length >= MAX_FILES ? '(Max reached)' : `(${selectedFiles.length}/${MAX_FILES})`}</span>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
-
+        <form onSubmit={handleSubmit} className="bg-gray-800 rounded-2xl p-2">
+          <textarea
+            ref={textareaRef}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask anything..."
+            className="w-full bg-transparent resize-none focus:outline-none min-h-[40px] max-h-40"
+            rows="1"
+          />
+          
           {/* Hidden file input */}
           <input
             ref={fileInputRef}
@@ -202,23 +188,100 @@ const MessageInput = ({ onSendMessage, isLoading }) => {
             accept="*/*"
           />
 
-          <textarea
-            ref={textareaRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask anything..."
-            className="flex-1 bg-transparent resize-none focus:outline-none min-h-[24px] max-h-32"
-            rows="1"
-          />
-          
-          <button
-            type="submit"
-            disabled={(!inputValue.trim() && selectedFiles.length === 0) || isLoading}
-            className="p-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:opacity-50 rounded-lg transition-colors"
-          >
-            <Send className="w-5 h-5" />
-          </button>
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center gap-2">
+              <div className="relative" ref={menuRef}>
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen(prev => !prev)}
+                  className="p-1.5 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+                {isMenuOpen && (
+                  <div
+                    className="absolute bottom-full left-0 mb-2 w-48 bg-gray-900 rounded-lg shadow-lg text-white"
+                  >
+                    <ul className="py-1">
+                      <li
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-800 cursor-pointer"
+                        onClick={() => {
+                          setModalOpen(true);
+                          setMenuOpen(false);
+                        }}
+                      >
+                        <BookOpen className="w-5 h-5 text-gray-400" />
+                        <span>Import lecture</span>
+                      </li>
+                      <li 
+                        className={`flex items-center gap-3 px-4 py-2 hover:bg-gray-800 cursor-pointer ${
+                          selectedFiles.length >= MAX_FILES ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        onClick={handleFileUploadClick}
+                      >
+                        <Paperclip className="w-5 h-5 text-gray-400" />
+                        <span>Upload files {selectedFiles.length >= MAX_FILES ? '(Max reached)' : `(${selectedFiles.length}/${MAX_FILES})`}</span>
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+              
+              {/* Feynman Mode Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setFeynmanMode(prev => !prev)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                  feynmanMode 
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                    : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                }`}
+                title={feynmanMode ? 'Feynman Mode: ON' : 'Feynman Mode: OFF'}
+              >
+                <Brain className="w-4 h-4" />
+                <span className="text-sm font-medium">Feynman Mode</span>
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="relative" ref={modelMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setModelMenuOpen(prev => !prev)}
+                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-300 transition-colors"
+                >
+                  <span>{selectedModel}</span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                {isModelMenuOpen && (
+                  <div className="absolute bottom-full right-0 mb-2 w-48 bg-gray-900 rounded-lg shadow-lg text-white">
+                    <ul className="py-1">
+                      {models.map(model => (
+                        <li
+                          key={model}
+                          className="flex items-center justify-between px-4 py-2 hover:bg-gray-800 cursor-pointer"
+                          onClick={() => {
+                            setSelectedModel(model);
+                            setModelMenuOpen(false);
+                          }}
+                        >
+                          <span>{model}</span>
+                          {selectedModel === model && <Check className="w-4 h-4 text-purple-400" />}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={(!inputValue.trim() && selectedFiles.length === 0) || isLoading}
+                className="p-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:opacity-50 rounded-lg transition-colors"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </form>
       </div>
       <ImportLectureModal

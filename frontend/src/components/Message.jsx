@@ -22,24 +22,24 @@ const Message = ({ message, index }) => {
 
   if (message.type === 'user') {
     return (
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-2">
         <div className="max-w-2xl">
           {/* Message content */}
           {message.content && (
-            <div className="px-4 py-2 bg-gray-700 text-gray-100 rounded-lg mb-2">
+            <div className="px-4 py-2 bg-gray-700 text-gray-100 rounded-lg mb-1">
               {message.content}
             </div>
           )}
           
           {/* File attachments */}
           {message.attachments && message.attachments.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {message.attachments.map((attachment, attachmentIndex) => (
                 <div 
                   key={attachmentIndex} 
-                  className="flex items-center gap-2 bg-gray-800 rounded-lg p-3 border border-gray-600"
+                  className="flex items-center gap-2 bg-gray-800 rounded-lg p-2 border border-gray-600"
                 >
-                  <FileText className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                  <FileText className="w-4 h-4 text-blue-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-200 truncate">{attachment.name}</p>
                     <p className="text-xs text-gray-400">{formatFileSize(attachment.size)}</p>
@@ -58,7 +58,7 @@ const Message = ({ message, index }) => {
   const parts = message.content.split(/```(\w+)?\n([\s\S]*?)```/);
   
   return (
-    <div className="flex mb-4">
+    <div className="flex mb-2">
       <div className="flex-shrink-0 w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center mr-3">
         <Sparkles className="w-5 h-5 text-white" />
       </div>
@@ -69,7 +69,7 @@ const Message = ({ message, index }) => {
             const language = parts[partIndex - 1] || 'plaintext';
             const codeIndex = `${index}-${partIndex}`;
             return (
-              <div key={partIndex} className="my-4 relative group">
+              <div key={partIndex} className="my-2 relative group">
                 <div className="bg-gray-950 rounded-lg overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-2 bg-gray-900 text-gray-400 text-sm">
                     <span>{language}</span>
