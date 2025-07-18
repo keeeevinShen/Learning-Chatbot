@@ -77,3 +77,37 @@ export const sendMessage = async (message, conversationId, files = []) => {
     // This would delete a chat from the backend
     return { success: true };
   };
+
+  export const importLecture = async (lectureUrl) => {
+    try {
+      console.log('🚀 Making request to backend with URL:', lectureUrl);
+      
+      const response = await fetch('http://127.0.0.1:8000/transcript', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ lecture_url: lectureUrl }),
+      });
+
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response ok:', response.ok);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Backend response data:', data);
+      
+      // Expected response format: { success: true/false, filename: "lecture_name.txt" }
+      if (!data.success) {
+        throw new Error(data.message || 'Import failed');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("❌ Error importing lecture:", error);
+      throw error;
+    }
+  };

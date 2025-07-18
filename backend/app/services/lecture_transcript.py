@@ -83,3 +83,22 @@ def handle_transcript_request(lecture_url: str):
     except Exception as e:
         logging.critical("An unhandled exception occurred in handle_transcript_request: %s", e, exc_info=True)
         return None
+    
+
+
+
+
+def handle_lecture_name(lecture_url: str) -> str:
+    """
+    Placeholder function to extract/generate lecture name from URL.
+    This should be implemented to return an appropriate filename.
+    """
+    # For now, extract domain and create a simple name
+    # In practice, this might parse the URL or extract title from page
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(lecture_url)
+        domain = parsed.netloc.replace('www.', '')
+        return f"{domain}_lecture_transcript.txt"
+    except:
+        return "lecture_transcript.txt"

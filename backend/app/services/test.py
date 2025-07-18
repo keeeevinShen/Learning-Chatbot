@@ -1,0 +1,3 @@
+from lecture_transcript import handle_transcript_request
+
+handle_transcript_request()

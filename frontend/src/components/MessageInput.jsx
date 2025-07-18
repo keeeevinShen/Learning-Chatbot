@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Paperclip, Send, BookOpen, Plus, X, FileText, AlertCircle, ChevronDown, Check, Brain } from 'lucide-react';
 import ImportLectureModal from './ImportLectureModal';
+import { importLecture } from '../service/chatService';
 
 const models = [
   "Gemini 2.5 pro",
@@ -19,6 +20,10 @@ const MessageInput = ({ onSendMessage, isLoading }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [fileError, setFileError] = useState('');
   const [feynmanMode, setFeynmanMode] = useState(false);
+  
+  // New states for lecture import process
+  const [isImporting, setIsImporting] = useState(false);
+  
   const textareaRef = useRef(null);
   const menuRef = useRef(null);
   const modelMenuRef = useRef(null);
@@ -77,10 +82,51 @@ const MessageInput = ({ onSendMessage, isLoading }) => {
     }
   };
 
-  const handleImportLecture = () => {
-    // Logic to handle lecture import
-    console.log('Importing lecture...');
-    setModalOpen(false);
+  const handleImportLecture = async (lectureUrl) => {
+    try {
+      console.log('Importing lecture from URL:', lectureUrl);
+      
+      // Start the importing process
+      setIsImporting(true);
+      setModalOpen(false); // Close the input modal
+      
+      // Call the import lecture API
+      const result = await importLecture(lectureUrl);
+      
+      console.log('Lecture import successful:', result);
+      
+      // Stop importing
+      setIsImporting(false);
+      
+      // Create a mock file object for the lecture transcript
+      const lectureFile = {
+        name: result.filename || 'lecture transcript.txt',
+        size: 0, // Placeholder size since it's a transcript
+        type: 'text/plain',
+        isLectureTranscript: true, // Flag to identify this as a lecture transcript
+        url: lectureUrl // Store the original URL for reference
+      };
+      
+      // Add the lecture transcript as a selected file
+      setSelectedFiles(prev => {
+        const newCount = prev.length + 1;
+        if (newCount > MAX_FILES) {
+          setFileError(`You can only upload up to ${MAX_FILES} files. Lecture transcript was not added.`);
+          return prev;
+        }
+        setFileError(''); // Clear any existing errors
+        return [...prev, lectureFile];
+      });
+      
+    } catch (error) {
+      console.error('Failed to import lecture:', error);
+      
+      // Stop importing on error
+      setIsImporting(false);
+      
+      // Show error notification
+      alert('Failed to import lecture. Please check the URL and try again.');
+    }
   };
 
   const handleFileUploadClick = () => {
@@ -150,9 +196,13 @@ const MessageInput = ({ onSendMessage, isLoading }) => {
             <div className="space-y-1">
               {selectedFiles.map((file, index) => (
                 <div key={index} className="flex items-center gap-2 bg-gray-800 rounded-lg p-1.5">
-                  <FileText className="w-3 h-3 text-blue-400" />
+                  {file.isLectureTranscript ? (
+                    <BookOpen className="w-3 h-3 text-purple-400" />
+                  ) : (
+                    <FileText className="w-3 h-3 text-blue-400" />
+                  )}
                   <span className="text-xs text-gray-300 flex-1">
-                    {file.name} ({formatFileSize(file.size)})
+                    {file.name} {!file.isLectureTranscript && `(${formatFileSize(file.size)})`}
                   </span>
                   <button
                     type="button"
@@ -289,6 +339,21 @@ const MessageInput = ({ onSendMessage, isLoading }) => {
         onClose={() => setModalOpen(false)}
         onImport={handleImportLecture}
       />
+      
+      {/* Waiting Window */}
+      {isImporting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md relative">
+            <div className="flex flex-col items-center text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mb-4"></div>
+              <h3 className="text-lg font-semibold text-white mb-2">Processing Lecture Import</h3>
+              <p className="text-gray-300">Please wait, be ready to check your DUO mobile app for authentication</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+
     </div>
   );
 };
