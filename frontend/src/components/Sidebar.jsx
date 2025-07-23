@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Book, MessageSquare, User, X, Menu, UploadCloud } from 'lucide-react';
+import { Plus, Search, Book, MessageSquare, User, X, Menu, UploadCloud, LogIn } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({
   isOpen,
@@ -15,6 +16,8 @@ const Sidebar = ({
   onDeleteChat,
   onToggleSidebar
 }) => {
+  const { isAuthenticated, user } = useAuth();
+  
   const filteredChats = chats.filter(chat =>
     chat.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -94,10 +97,23 @@ const Sidebar = ({
 
       {/* Footer */}
       <div className={`p-4 border-t border-gray-700 ${isOpen ? 'transition-opacity duration-500 opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-gray-100 hover:bg-gray-800 rounded-lg transition-colors">
-          <User className="w-4 h-4" />
-          <span>Account</span>
-        </button>
+        {isAuthenticated ? (
+          <Link 
+            to="/account" 
+            className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-gray-100 hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            <User className="w-4 h-4" />
+            <span>{user?.name || 'Account'}</span>
+          </Link>
+        ) : (
+          <Link 
+            to="/login" 
+            className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-gray-100 hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Login</span>
+          </Link>
+        )}
       </div>
     </div>
     </>

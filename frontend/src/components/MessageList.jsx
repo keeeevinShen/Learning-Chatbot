@@ -4,9 +4,11 @@ import React, { useRef, useEffect } from 'react';
 import Message from './Message';
 import { Sparkles } from 'lucide-react';
 import { Bot } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const MessageList = ({ messages, isLoading, isEmpty }) => {
   const chatEndRef = useRef(null);
+  const { isAuthenticated, user } = useAuth();
 
   // Scroll to bottom when new messages are added
   useEffect(() => {
@@ -17,7 +19,9 @@ const MessageList = ({ messages, isLoading, isEmpty }) => {
     return (
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-2">
         <div className="max-w-3xl mx-auto flex flex-col items-center justify-center h-full text-center">
-            <h2 className="text-4xl font-bold text-gray-300 mb-2">Welcome!</h2>
+            <h2 className="text-4xl font-bold text-gray-300 mb-2">
+              Welcome{isAuthenticated && user?.name ? `, ${user.name}` : ''}!
+            </h2>
             <p className="text-lg text-gray-500 mb-8">Learn new concepts or deepen your understanding of existing knowledge</p>
         </div>
       </div>

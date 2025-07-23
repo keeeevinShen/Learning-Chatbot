@@ -101,8 +101,9 @@ const EmbedDocumentPage = () => {
       });
 
       // Send to backend (replace with your actual endpoint)
-      const response = await fetch('http://127.0.0.1:8000/embed-documents', {
+      const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/embed-documents`, {
         method: 'POST',
+        credentials: 'include', // Include cookies for authentication
         body: formData, // Browser will set Content-Type with boundary automatically
       });
 

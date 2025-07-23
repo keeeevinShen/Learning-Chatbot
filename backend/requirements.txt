@@ -9,3 +9,9 @@ semantic-chunkers
 semantic-router
 tavily-python
 python-multipart
+httpx
+sqlalchemy
+asyncpg
+aiosqlite
+alembic
+python-jose[cryptography]

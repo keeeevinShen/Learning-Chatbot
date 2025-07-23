@@ -17,8 +17,9 @@ export const sendMessage = async (message, conversationId, files = []) => {
           formData.append(`files`, file);
         });
         
-        response = await fetch('http://127.0.0.1:8000/chat', {
+        response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/chat`, {
           method: 'POST',
+          credentials: 'include', // Include cookies for authentication
           body: formData, // Don't set Content-Type header, let browser set it with boundary
         });
       } else {
@@ -28,8 +29,9 @@ export const sendMessage = async (message, conversationId, files = []) => {
           conversation_id: conversationId,
         };
         
-        response = await fetch('http://127.0.0.1:8000/chat', {
+        response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/chat`, {
           method: 'POST',
+          credentials: 'include', // Include cookies for authentication
           headers: {
             'Content-Type': 'application/json',
           },
@@ -82,8 +84,9 @@ export const sendMessage = async (message, conversationId, files = []) => {
     try {
       console.log('🚀 Making request to backend with URL:', lectureUrl);
       
-      const response = await fetch('http://127.0.0.1:8000/transcript', {
+      const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/transcript`, {
         method: 'POST',
+        credentials: 'include', // Include cookies for authentication
         headers: {
           'Content-Type': 'application/json',
         },
