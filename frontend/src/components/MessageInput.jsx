@@ -68,7 +68,7 @@ const MessageInput = ({ onSendMessage, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if ((inputValue.trim() || selectedFiles.length > 0) && !isLoading) {
-      onSendMessage(inputValue, selectedFiles);
+      onSendMessage(inputValue, selectedFiles, feynmanMode);
       setInputValue('');
       setSelectedFiles([]);
       setFileError('');

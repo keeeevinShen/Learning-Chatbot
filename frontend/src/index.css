@@ -1,19 +1,19 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 /* Ensure the app fills the entire viewport */
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow: hidden;
+  /* overflow: hidden; */
   background-color: #111827; /* gray-900 to match the chat interface */
 }
 
 #root {
   height: 100%;
-  overflow: hidden;
+  /* overflow: hidden; */
 }
 
 /* Prevent any unwanted scrollbars */

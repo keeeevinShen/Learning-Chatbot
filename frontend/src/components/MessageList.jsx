@@ -35,7 +35,7 @@ const MessageList = ({ messages, isLoading, isEmpty }) => {
           <Message key={message.id} message={message} index={index} />
         ))}
         
-        {isLoading && (
+        {isLoading && !messages.some(msg => msg.isStreaming) && (
           <div className="flex mb-4">
             <div className="flex-shrink-0 w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center mr-3">
               <Sparkles className="w-5 h-5 text-white animate-pulse" />

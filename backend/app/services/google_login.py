@@ -2,7 +2,6 @@ import os
 import logging
 import httpx
 from typing import Dict, Optional
-from dotenv import load_dotenv
 from dotenv import load_dotenv, find_dotenv
 import os
 

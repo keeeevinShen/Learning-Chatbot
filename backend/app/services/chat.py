@@ -6,14 +6,14 @@ import os
 import asyncio
 import logging
 from typing import Optional, AsyncGenerator, Dict, Any
-from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv,find_dotenv
+from langchain_anthropic import ChatAnthropic
 from langchain.schema import HumanMessage, SystemMessage, BaseMessage
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.callbacks.base import AsyncCallbackHandler
 
 # Load environment variables
-load_dotenv()
+load_dotenv(find_dotenv())
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -31,33 +31,33 @@ class ChatService:
     """Production-ready chat service with caching and async support"""
     
     def __init__(self):
-        self._llm: Optional[ChatOpenAI] = None
-        self._streaming_llm: Optional[ChatOpenAI] = None
+        self._llm: Optional[ChatAnthropic] = None
+        self._streaming_llm: Optional[ChatAnthropic] = None
         self.conversation_history: Dict[str, list[BaseMessage]] = {}
         
     @property
-    def llm(self) -> ChatOpenAI:
+    def llm(self) -> ChatAnthropic:
         """Lazy initialization of LLM model (cached for reuse)"""
         if self._llm is None:
-            self._llm = ChatOpenAI(
-                model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
-                temperature=float(os.getenv("OPENAI_TEMPERATURE", "0.7")),
-                api_key=os.getenv("OPENAI_API_KEY"),
+            self._llm = ChatAnthropic(
+                model=os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"),
+                temperature=float(os.getenv("ANTHROPIC_TEMPERATURE", "0.7")),
+                anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
                 max_tokens=int(os.getenv("MAX_TOKENS", "1000")),
-                request_timeout=30,  # 30 second timeout
+                timeout=30,  # 30 second timeout
             )
         return self._llm
     
     @property 
-    def streaming_llm(self) -> ChatOpenAI:
+    def streaming_llm(self) -> ChatAnthropic:
         """Streaming version of LLM for real-time responses"""
         if self._streaming_llm is None:
-            self._streaming_llm = ChatOpenAI(
-                model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
-                temperature=float(os.getenv("OPENAI_TEMPERATURE", "0.7")),
-                api_key=os.getenv("OPENAI_API_KEY"),
+            self._streaming_llm = ChatAnthropic(
+                model=os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"),
+                temperature=float(os.getenv("ANTHROPIC_TEMPERATURE", "0.7")),
+                anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
                 max_tokens=int(os.getenv("MAX_TOKENS", "1000")),
-                request_timeout=30,
+                timeout=30,
                 streaming=True,
             )
         return self._streaming_llm
@@ -212,11 +212,6 @@ async def handle_chat(message: str, session_id: Optional[str] = None, mode: str 
     async for token in chat_service.handle_chat(message, session_id, mode):
         yield token
 
-async def handle_chat_complete(message: str, session_id: Optional[str] = None, mode: str = "default") -> str:
-    """
-    ⚠️  NON-STREAMING VERSION - Only for special cases!
-    """
-    return await chat_service.handle_chat_complete(message, session_id, mode)
 
 # Backward compatibility aliases
 async def stream_chat_response(message: str, session_id: Optional[str] = None, mode: str = "default"):

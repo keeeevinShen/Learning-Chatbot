@@ -60,7 +60,7 @@ const Message = ({ message, index }) => {
   return (
     <div className="flex mb-2">
       <div className="flex-shrink-0 w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center mr-3">
-        <Sparkles className="w-5 h-5 text-white" />
+        <Sparkles className={`w-5 h-5 text-white ${message.isStreaming ? 'animate-pulse' : ''}`} />
       </div>
       <div className="max-w-2xl">
         {parts.map((part, partIndex) => {
@@ -106,6 +106,10 @@ const Message = ({ message, index }) => {
           }
           return null;
         })}
+        {/* Show typing cursor if message is streaming */}
+        {message.isStreaming && (
+          <span className="inline-block w-2 h-5 bg-gray-300 animate-pulse ml-1"></span>
+        )}
       </div>
     </div>
   );
