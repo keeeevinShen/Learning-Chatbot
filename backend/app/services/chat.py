@@ -7,7 +7,7 @@ import asyncio
 import logging
 from typing import Optional, AsyncGenerator, Dict, Any
 from dotenv import load_dotenv,find_dotenv
-from langchain_anthropic import ChatAnthropic
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.schema import HumanMessage, SystemMessage, BaseMessage
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.callbacks.base import AsyncCallbackHandler
@@ -31,34 +31,33 @@ class ChatService:
     """Production-ready chat service with caching and async support"""
     
     def __init__(self):
-        self._llm: Optional[ChatAnthropic] = None
-        self._streaming_llm: Optional[ChatAnthropic] = None
+        self._llm: Optional[ChatGoogleGenerativeAI] = None
+        self._streaming_llm: Optional[ChatGoogleGenerativeAI] = None
         self.conversation_history: Dict[str, list[BaseMessage]] = {}
         
     @property
-    def llm(self) -> ChatAnthropic:
+    def llm(self) -> ChatGoogleGenerativeAI:
         """Lazy initialization of LLM model (cached for reuse)"""
         if self._llm is None:
-            self._llm = ChatAnthropic(
-                model=os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"),
-                temperature=float(os.getenv("ANTHROPIC_TEMPERATURE", "0.7")),
-                anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
-                max_tokens=int(os.getenv("MAX_TOKENS", "1000")),
+            self._llm = ChatGoogleGenerativeAI(
+                model=os.getenv("GEMINI_MODEL", "gemini-1.5-pro"),
+                temperature=float(os.getenv("GEMINI_TEMPERATURE", "0.7")),
+                google_api_key=os.getenv("GEMINI_API_KEY"),
+                max_output_tokens=int(os.getenv("MAX_TOKENS", "1000")),
                 timeout=30,  # 30 second timeout
             )
         return self._llm
     
     @property 
-    def streaming_llm(self) -> ChatAnthropic:
+    def streaming_llm(self) -> ChatGoogleGenerativeAI:
         """Streaming version of LLM for real-time responses"""
         if self._streaming_llm is None:
-            self._streaming_llm = ChatAnthropic(
-                model=os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"),
-                temperature=float(os.getenv("ANTHROPIC_TEMPERATURE", "0.7")),
-                anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
-                max_tokens=int(os.getenv("MAX_TOKENS", "1000")),
+            self._streaming_llm = ChatGoogleGenerativeAI(
+                model=os.getenv("GEMINI_MODEL", "gemini-1.5-pro"),
+                temperature=float(os.getenv("GEMINI_TEMPERATURE", "0.7")),
+                google_api_key=os.getenv("GEMINI_API_KEY"),
+                max_output_tokens=int(os.getenv("MAX_TOKENS", "1000")),
                 timeout=30,
-                streaming=True,
             )
         return self._streaming_llm
 

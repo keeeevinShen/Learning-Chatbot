@@ -24,7 +24,7 @@ jiter
 jsonpatch==1.33
 jsonpointer==3.0.0
 langchain
-langchain-anthropic
+langchain-google-genai
 langchain-community
 langchain-core
 langchain-ollama

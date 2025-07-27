@@ -5,7 +5,24 @@ from typing import List, Optional, Literal
 from typing import List, Optional, TypedDict, Annotated
 from pydantic import BaseModel, Field
 import operator
+from langgraph.graph import add_messages
+from langchain_core.messages import AnyMessage
 
+# ============================================================================
+# STATE DEFINITION - LangGraph Agent State
+# ============================================================================
+class AgentState(TypedDict):
+    # Core conversation data
+    history_messages: Annotated[list[AnyMessage], add_messages]
+
+    # Output and supporting data
+    response: Optional[str]
+    error: Optional[str]
+
+
+# ============================================================================
+# PYDANTIC MODELS FOR STRUCTURED OUTPUT
+# ============================================================================
 
 class Attachment(BaseModel):
     name: str = Field(description="The name of the attached file.")
@@ -26,41 +43,13 @@ class ChatResponse(BaseModel):
     tool_calls: List[ToolCall] = Field([], description="A list of tools that were executed.")
 
 
-class ChatRequest(BaseModel):
-    message: str
-    conversation_id: str
-    user_id: Optional[str] = None # To fetch user-specific info
 
-    mode: Literal["chat","query"] = Field("chat",description = "the mode of interaction. ")  # set by the user in frontend 
-    attachments: List[Attachment] = Field([], description="A list of files or images attached to the message.")
+class SearchQuery(BaseModel):
+    query: List[str] = Field(
+        description="A list of search queries to be used for web research."
+    )
 
 
-
-
-class ChatMessage(TypedDict):
-    role: str
-    content: str
-
-class Source(TypedDict):
-    title: str
-    chunk: str
-    # other metadata fields...
-
-class AgentState(TypedDict):
-    # Identifiers for the conversation context
-    workspace_id: str
-    thread_id: str
-    user_id: Optional[str]      # For logged-in users
-    session_id: Optional[str]   # For anonymous users
-
-    # Core conversation data
-    message: str
-    chat_history: List[ChatMessage]
-
-    # Output and supporting data
-    response: Optional[str]
-    sources: Optional[List[Source]]
-    error: Optional[str]
 
 
 
