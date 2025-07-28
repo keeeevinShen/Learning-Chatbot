@@ -9,18 +9,6 @@ from langgraph.graph import add_messages
 from langchain_core.messages import AnyMessage
 
 # ============================================================================
-# STATE DEFINITION - LangGraph Agent State
-# ============================================================================
-class AgentState(TypedDict):
-    # Core conversation data
-    history_messages: Annotated[list[AnyMessage], add_messages]
-
-    # Output and supporting data
-    response: Optional[str]
-    error: Optional[str]
-
-
-# ============================================================================
 # PYDANTIC MODELS FOR STRUCTURED OUTPUT
 # ============================================================================
 
@@ -48,6 +36,11 @@ class SearchQuery(BaseModel):
     query: List[str] = Field(
         description="A list of search queries to be used for web research."
     )
+
+
+class checkpoints(BaseModel):
+    goals: List[str] = Field(description="concepts we trying to learn")
+
 
 
 
