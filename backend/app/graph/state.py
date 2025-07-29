@@ -1,9 +1,6 @@
 
 
-from pydantic import BaseModel, Field
-from typing import List, Optional, Literal
 from typing import List, Optional, TypedDict, Annotated
-from pydantic import BaseModel, Field
 import operator
 from langgraph.graph import add_messages
 from langchain_core.messages import AnyMessage
@@ -12,9 +9,14 @@ from graph.schemas import *
 
 
 class AgentState(TypedDict):
+    #know which conversation
     thread_id: str 
+
+    #know who we are talking to, and extract the right known knowledges from the database
+    user_id: str
     # Core conversation data
     history_messages: Annotated[list[AnyMessage], add_messages]
+
     # Output and supporting data
     response: Optional[str]
 
