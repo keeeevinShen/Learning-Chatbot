@@ -12,6 +12,7 @@ from graph.schemas import *
 
 
 class AgentState(TypedDict):
+    thread_id: str 
     # Core conversation data
     history_messages: Annotated[list[AnyMessage], add_messages]
     # Output and supporting data
@@ -21,6 +22,9 @@ class AgentState(TypedDict):
     search_query: Annotated[list, operator.add]
 
     learning_checkpoints: Annotated[list, operator.add]
+
+    #knowledge can used to explain after perform RAG 
+    KnownKnowledge: Annotated[list[str], add_messages]
 
     error: Optional[str]
 

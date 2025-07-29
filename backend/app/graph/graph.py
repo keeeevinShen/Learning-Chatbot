@@ -12,6 +12,14 @@ from graph.state import *
 from graph.schemas import *
 from graph.configuration import Configuration
 from graph.prompts import Learning_mode_prompt
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+import chromadb
+
+
+embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+chroma_client = chromadb.Client()
+collection = chroma_client.get_or_create_collection(name="my_rag_collection")
+
 
 #keep in mind need to make our override_config contain the "configurable" keyword, thats what LangGraph will look at, its a reserved keyword
 
@@ -85,6 +93,40 @@ def generate_query(state: AgentState, config: RunnableConfig):
 
 
 
+#using the qeury to perform RAG search too find the known knowledge
+def search_relevant(state: AgentState, config: RunnableConfig):
+    configurable = Configuration.from_runnable_config(config)
+    search_queries = state.get('search_query', [])
+    vectorized_queries = embedding_model.embed_documents(search_queries)
+
+    results = collection.query(
+            query_embeddings=vectorized_queries,
+            n_results=5 
+        )
+    
+    retrieved_docs = [doc for doc_list in results['documents'] for doc in doc_list]
+
+    return {"KnownKnowledge": retrieved_docs}
+
+
+
+
+
+
+
+
+
+
+
+#final step to store the knowledge to the RAG system
+def store_known_knowledge(state: AgentState, config: RunnableConfig):
+    configurable = Configuration.from_runnable_config(config)
+   
+
+
+
+
+
 # Create our Agent Graph
 builder = StateGraph(AgentState, config_schema=Configuration)
 
@@ -93,6 +135,7 @@ builder.add_node("generate_query",generate_query)
 
 
 
+graph = builder.compile(name="pro-search-agent")
 
 
 

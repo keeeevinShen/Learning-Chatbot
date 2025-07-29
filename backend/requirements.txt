@@ -16,3 +16,4 @@ asyncpg
 aiosqlite
 alembic
 python-jose[cryptography]
+chromadb
