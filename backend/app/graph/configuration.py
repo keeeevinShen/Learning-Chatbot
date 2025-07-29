@@ -50,7 +50,7 @@ class Configuration(BaseModel):
     ) -> "Configuration":
         """Create a Configuration instance from a RunnableConfig."""
         configurable = (
-            config["configurable"] if config and "configurable" in config else {}
+            config["configurable"] if config and "configurable" in config else {}    
         )
 
         # Get raw values from environment or config
