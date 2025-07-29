@@ -1,28 +1,38 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
-from sqlalchemy.sql import func
-from .base import Base
+# backend/app/models/user.py
 
-class User(Base):
-    __tablename__ = "users"
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
 
-    # These columns are specific to the User model
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    email = Column(String, unique=True, index=True, nullable=False)
+class User(BaseModel):
+    """
+    Simple type-safe model - just tells Python what fields exist.
+    The actual database structure is defined in SQL schema.
+    """
+    user_id: str
+    email: str
+    
+    thread_ids: list[str]
+    thread_names: list[str]
     
     # Google OAuth fields
-    google_id = Column(String, unique=True, index=True, nullable=True)
-    name = Column(String, nullable=True)
-    first_name = Column(String, nullable=True)
-    last_name = Column(String, nullable=True)
-    picture = Column(String, nullable=True)
+    google_id: Optional[str] = None
+    name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    picture: Optional[str] = None
     
-    # Traditional auth fields (optional for Google users)
-    hashed_password = Column(String, nullable=True)
+    # Traditional auth fields
+    hashed_password: Optional[str] = None
     
     # Status fields
-    is_active = Column(Boolean, default=True)
-    verified_email = Column(Boolean, default=False)
+    is_active: bool = True
+    verified_email: bool = False
     
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        # This lets you create User objects from database rows
+        from_attributes = True
