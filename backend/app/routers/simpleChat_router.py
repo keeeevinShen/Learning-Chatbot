@@ -1,76 +1,88 @@
+# Alternative: Ultra-Simple Router - Direct Agent Integration
 # File: app/routers/simpleChat_router.py
 
 import logging
-from typing import Optional, List
-from fastapi import APIRouter, Form, File, UploadFile, HTTPException
+from fastapi import APIRouter, Form, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from ..services.chat import handle_chat
-import json
+from langchain_core.messages import HumanMessage
+from ..graph.graph import graph
 from auth_dependencies import *
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 router = APIRouter()
 
-class ChatRequest(BaseModel):
-    message: str
-    thread_id: Optional[str] = None
-
 @router.post("/simplechat")
-async def simple_chat_stream(
-    message: Optional[str] = Form(None),
-    thread_id: Optional[str] = Form(None),
-    files: List[UploadFile] = File(default=[]),
-    current_user: User = Depends(get_current_user)
+async def chat_with_agent(
+    message: str = Form(...),  # Required message
+    thread_id: str = Form(...),  # Required thread ID
+    current_user: User = Depends(get_current_user),
 ):
     """
-    🚀 Simple Chat Endpoint with Streaming Support
+    🎯 Ultra-Simple Chat - Direct Agent Integration
     
-    Handles both text-only and file upload requests.
-    Always returns streaming responses for better UX.
+    Clean and simple: message + thread_id required, direct agent integration, full streaming.
     """
-    try:
-        logger.info(f"Simple chat request - Message: {message}, Conversation ID: {thread_id}, Files: {len(files)}")
-        if not current_user.is_active:
-            raise HTTPException(status_code=403, detail="Your account is suspended.")
-        
+    if not current_user.is_active:
+        raise HTTPException(status_code=403, detail="Account suspended")
     
-        # Prepare the message with file context if files are present
-        final_message = message or "Please analyze the uploaded files."
-        
-        # Define the streaming generator
-        async def generate_stream():
-            try:
-                # Use the existing chat service for streaming
-                async for token in handle_chat(
-                    message=final_message,
-                    session_id=thread_id or "default",
-                    mode="default"
-                ):
-                    # Format as Server-Sent Events (SSE) - required even for LangGraph SDK
-                    yield f"data: {token}\n\n"
-                    
-            except Exception as e:
-                logger.error(f"Error in streaming: {str(e)}")
-                yield f"data: Error: {str(e)}\n\n"
-        
-        # Return streaming response with SSE format
-        return StreamingResponse(
-            generate_stream(),
-            media_type="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "*",
+    async def stream_agent_response():
+        """Stream responses directly from your LangGraph agent"""
+        try:
+            # Prepare agent state - clean and simple
+            state = {
+                "thread_id": thread_id,
+                "user_id": str(current_user.id),
+                "history_messages": [HumanMessage(content=message)],
+                "search_query": [],
+                "learning_checkpoints": [],
+                "KnownKnowledge": [],
+                "response": None,
+                "error": None
             }
-        )
-        
-    except Exception as e:
-        logger.error(f"Error in simple chat endpoint: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
+            
+            # Stream directly from your agent - uses default config!
+            async for event in graph.astream(state):
+                for node_name, node_data in event.items():
+                    
+                    # Learning goals step
+                    if node_name == "generate_learning_goals":
+                        goals = node_data.get("learning_checkpoints", [])
+                        if goals:
+                            yield f"data: 📚 **Learning Plan:**\n\n"
+                            for i, goal in enumerate(goals, 1):
+                                yield f"data: {i}. {goal}\n\n"
+                            yield f"data: \n\n"
+                    
+                    # Knowledge retrieval step  
+                    elif node_name == "search_relevant":
+                        knowledge = node_data.get("KnownKnowledge", [])
+                        if knowledge:
+                            yield f"data: 🔍 *Drawing from your learning materials...*\n\n"
+                    
+                    # Final response step
+                    elif node_name == "generate_response":
+                        response = node_data.get("response", "")
+                        if response:
+                            yield f"data: \n**Answer:**\n\n"
+                            # Stream word by word for better UX
+                            words = response.split()
+                            for word in words:
+                                yield f"data: {word} "
+                                # Optional: add tiny delay for dramatic effect
+                                # await asyncio.sleep(0.01)
+                            yield f"data: \n\n"
+                            
+        except Exception as e:
+            logger.error(f"Agent error: {e}")
+            yield f"data: ❌ I'm having trouble right now. Please try again in a moment.\n\n"
+    
+    return StreamingResponse(
+        stream_agent_response(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+        }
+    )
