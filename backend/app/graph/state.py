@@ -26,7 +26,7 @@ class AgentState(TypedDict):
     learning_checkpoints: Annotated[list, operator.add]
 
     #knowledge can used to explain after perform RAG 
-    KnownKnowledge: Annotated[list[str], add_messages]
+    KnownKnowledge: Annotated[list[str], operator.add]
 
     error: Optional[str]
 

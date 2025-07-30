@@ -14,11 +14,9 @@ from .configuration import Configuration
 from .prompts import Learning_mode_prompt
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import chromadb
+from ..core.chroma_db import chroma_manager
 
 
-embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-chroma_client = chromadb.Client()
-collection = chroma_client.get_or_create_collection(name="my_rag_collection")
 
 
 #keep in mind need to make our override_config contain the "configurable" keyword, thats what LangGraph will look at, its a reserved keyword
@@ -34,11 +32,14 @@ collection = chroma_client.get_or_create_collection(name="my_rag_collection")
 #   }
 # }
 load_dotenv(find_dotenv())
+
 if not os.getenv("GEMINI_API_KEY"):
     raise ValueError("GEMINI_API_KEY not found in environment variables.")
 
 
 genai_client = Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+collection = chroma_manager.get_collection()
 
 
 
@@ -97,7 +98,7 @@ def generate_query(state: AgentState, config: RunnableConfig):
 def search_relevant(state: AgentState, config: RunnableConfig):
     configurable = Configuration.from_runnable_config(config)
     search_queries = state.get('search_query', [])
-    vectorized_queries = embedding_model.embed_documents(search_queries)
+    vectorized_queries = chroma_manager.embedding_model.embed_documents(search_queries)
 
     results = collection.query(
             query_embeddings=vectorized_queries,
