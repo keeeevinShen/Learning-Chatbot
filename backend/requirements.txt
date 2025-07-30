@@ -17,3 +17,4 @@ aiosqlite
 alembic
 python-jose[cryptography]
 chromadb
+passlib[bcrypt]
