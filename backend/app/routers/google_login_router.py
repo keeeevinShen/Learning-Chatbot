@@ -12,7 +12,7 @@ load_dotenv(find_dotenv())
 # Import the authentication function you created
 from ..services.google_login import authenticate_google_user, find_or_create_user
 from ..models.user import User
-from ..database.session import get_database_session
+from ..database.session import get_db_session
 
 router = APIRouter(
     prefix="/api/auth",
@@ -45,7 +45,7 @@ def create_access_token(data: dict):
 async def google_auth_callback(
     payload: GoogleAuthPayload, 
     response: Response,
-    db_session: AsyncSession = Depends(get_database_session)
+    db_session: AsyncSession = Depends(get_db_session)
 ):
     """
     This endpoint is called by the frontend after it receives the

@@ -4,7 +4,7 @@ from typing import List, Optional, TypedDict, Annotated
 import operator
 from langgraph.graph import add_messages
 from langchain_core.messages import AnyMessage
-from graph.schemas import *
+from .schemas import *
 
 
 

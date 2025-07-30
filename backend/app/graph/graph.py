@@ -8,10 +8,10 @@ from google.genai import Client
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import HumanMessage
-from graph.state import *
-from graph.schemas import *
-from graph.configuration import Configuration
-from graph.prompts import Learning_mode_prompt
+from .state import *
+from .schemas import *
+from .configuration import Configuration
+from .prompts import Learning_mode_prompt
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import chromadb
 

@@ -17,10 +17,11 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Check if user is logged in on app start
-    const token = localStorage.getItem('authToken');
+    // Since we're using HTTP-only cookies, we'll check for stored user data
+    // The actual authentication is handled by the cookie
     const userData = localStorage.getItem('userData');
     
-    if (token && userData) {
+    if (userData) {
       setIsAuthenticated(true);
       setUser(JSON.parse(userData));
     }
@@ -29,26 +30,60 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // Simulate API call for demo purposes
-      // In a real app, you would make an actual API call here
-      const mockUser = {
-        id: 1,
-        email: email,
-        name: email.split('@')[0], // Use part before @ as name
-      };
-      const mockToken = 'mock-jwt-token-' + Date.now();
+      // Call the new traditional login endpoint
+      const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Important: Include cookies in the request
+        body: JSON.stringify({
+          email: email,
+          password: password
+        }),
+      });
 
-      // Store in localStorage
-      localStorage.setItem('authToken', mockToken);
-      localStorage.setItem('userData', JSON.stringify(mockUser));
+      if (!response.ok) {
+        // Handle different error responses
+        let errorMessage = 'Login failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+        } catch (parseError) {
+          // If response is not JSON, use default message
+          if (response.status === 401) {
+            errorMessage = 'Incorrect email or password';
+          } else if (response.status === 500) {
+            errorMessage = 'Server error. Please try again later';
+          }
+        }
+        return { success: false, error: errorMessage };
+      }
 
+      // Parse the successful response
+      const data = await response.json();
+      
+      // The backend returns user data and sets an HTTP-only cookie
+      const userData = data.user;
+
+      // Store user data in localStorage (not the token, as it's in HTTP-only cookie)
+      localStorage.setItem('userData', JSON.stringify(userData));
+
+      // Update the authentication state
       setIsAuthenticated(true);
-      setUser(mockUser);
+      setUser(userData);
 
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: 'Login failed' };
+      let errorMessage = 'Network error. Please check your connection and try again.';
+      
+      // Handle specific network errors
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        errorMessage = 'Unable to connect to server. Please try again later.';
+      }
+      
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -62,8 +97,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Invalid response from Google authentication');
       }
 
-      // Store in localStorage
-      localStorage.setItem('authToken', token);
+      // Store user data in localStorage (Google auth also uses HTTP-only cookies)
       localStorage.setItem('userData', JSON.stringify(googleUser));
 
       setIsAuthenticated(true);
@@ -96,7 +130,6 @@ export const AuthProvider = ({ children }) => {
     }
 
     // Clear local storage regardless of backend response
-    localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
     setIsAuthenticated(false);
     setUser(null);
@@ -134,4 +167,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-}; 
+};
