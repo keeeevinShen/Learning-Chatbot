@@ -3,6 +3,10 @@
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+
+from app.core.log_config import setup_logging
+setup_logging()
+
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import lecture_transcript_router, google_login_router, logout_router, simpleChat_router, traditional_login_router
 from .database.session import create_tables

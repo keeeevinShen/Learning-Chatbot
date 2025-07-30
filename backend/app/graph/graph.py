@@ -119,10 +119,24 @@ def search_relevant(state: AgentState, config: RunnableConfig):
 
 
 
-#final step to store the knowledge to the RAG system
-def store_known_knowledge(state: AgentState, config: RunnableConfig):
-    configurable = Configuration.from_runnable_config(config)
-   
+#final step to store the knowledge to the RAG system  ,   this will only be called when LLM think we finish our learning, and call this node. 
+def store_known_knowledge(state: AgentState):
+    topic = state["topic"]
+    content_list = state["learning_checkpoints"]  # this is a list[str]
+
+    combined_content = "\n\n".join(content_list)
+
+    collection = chroma_manager.get_collection("learning_materials")
+    embeddings = chroma_manager.embedding_model.embed_documents([combined_content])
+
+    collection.add(
+            embeddings=embeddings,
+            documents=[combined_content],
+            ids=[topic],
+            metadatas = [{"topic": topic} ]
+        )
+
+    return {}
 
 
 

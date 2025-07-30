@@ -14,6 +14,7 @@ class AgentState(TypedDict):
 
     #know who we are talking to, and extract the right known knowledges from the database
     user_id: str
+
     # Core conversation data
     history_messages: Annotated[list[AnyMessage], add_messages]
 
@@ -23,7 +24,10 @@ class AgentState(TypedDict):
     #place we store the search quries generate by LLM
     search_query: Annotated[list, operator.add]
 
-    learning_checkpoints: Annotated[list, operator.add]
+    #learning goals, also means what we will know after we finish learning
+    learning_checkpoints: Annotated[list[str], operator.add]
+
+    topic: Annotated[str,operator.add]
 
     #knowledge can used to explain after perform RAG 
     KnownKnowledge: Annotated[list[str], operator.add]
