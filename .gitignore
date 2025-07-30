@@ -123,3 +123,5 @@ yarn-error.log*
 
 # Database
 chatbot.db 
+
+.env.*
