@@ -127,3 +127,4 @@ chatbot.db
 .env.*
 
 chroma_db/
+logs/
