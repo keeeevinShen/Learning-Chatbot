@@ -34,11 +34,6 @@ class Configuration(BaseModel):
         metadata={"description": "The number of initial search queries to generate."},
     )
 
-    max_research_loops: int = Field(
-        default=2,
-        metadata={"description": "The maximum number of research loops to perform."},
-    )
-
     simplicity_threadhold: int = Field(
         default=2,
         metadata={"description": "the simplicity level we consider is simple enough."}

@@ -21,6 +21,21 @@ async def get_db_session():
     async with _pool.acquire() as connection:
         yield connection
 
+
+async def get_db_connection():
+    """Gets a direct connection from the pool for use in non-FastAPI contexts like the agent."""
+    global _pool
+    if not _pool:
+        _pool = await asyncpg.create_pool(
+            host=os.getenv("DB_HOST", "localhost"),
+            port=int(os.getenv("DB_PORT", "5432")),
+            user=os.getenv("DB_USER", "postgres"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME", "chatbot_db")
+        )
+    return await _pool.acquire()
+
+
 async def create_tables():
     """
     OPTION 2: Read SQL from separate file

@@ -19,7 +19,7 @@ class AgentState(TypedDict):
     history_messages: Annotated[list[AnyMessage], add_messages]
 
     # Output and supporting data
-    response: Optional[str]
+    response: Optional[str]    
 
     #place we store the search quries generate by LLM
     search_query: Annotated[list, operator.add]
@@ -31,7 +31,7 @@ class AgentState(TypedDict):
 
     #knowledge can used to explain after perform RAG 
     KnownKnowledge: Annotated[list[str], operator.add]
-    
+
     learning_complete: bool = False
     error: Optional[str]
 

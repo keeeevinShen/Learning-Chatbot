@@ -20,6 +20,11 @@ import logging
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.checkpoint.redis import RedisSaver
 
+import logging
+from langchain_core.runnables import RunnableConfig
+from ..database.session import get_db_connection
+from ..models.operations import check_thread_exists, add_thread
+
 logger = logging.getLogger(__name__)
 
 
@@ -88,7 +93,7 @@ def generate_query(state: AgentState, config: RunnableConfig):
     # Format the prompt with system message and user content
     checkpoints_str = "\n".join(state.get('learning_checkpoints', []))
     formatted_prompt = [  # System message for learning mode
-        HumanMessage(content=f"Based on the learning checkpoints:\n{checkpoints_str}\n\ngenerate queries that can retrive students known knowledge from the vectorized database.")
+        HumanMessage(content=f"Based on the learning checkpoints:\n{checkpoints_str}\n\ngenerate {configurable.number_of_initial_queries}queries that can retrive students known knowledge from the vectorized database.")
     ]
     
     # Generate the search queries
@@ -190,6 +195,49 @@ def should_continue(state: AgentState) -> str:
         return "wait_for_next_human_input"
 
 
+async def name_and_store_thread(state: AgentState, config: RunnableConfig):
+    """
+    Names the thread based on learning goals and stores it in the database if it's new.
+    Accesses user_id and thread_id directly from the config.
+
+    """
+
+    configurable = Configuration.from_runnable_config(config)
+    thread_id = configurable.thread_id
+    user_id = configurable.user_id
+    # Get a direct database connection
+    connection = await get_db_connection()
+    try:
+        #Check if the thread already exists, just for defensive programming sake
+        thread_exists = await check_thread_exists(connection, thread_id)
+
+        #  If it's a new thread, name and save it
+        if not thread_exists:
+            learning_goals = state.get("learning_checkpoints", [])
+            
+            # Generate a name from the first two goals, or use a default.
+            if learning_goals:
+                thread_name = "Learning: " + ", ".join(learning_goals[:2])
+            else:
+                thread_name = "New Conversation"
+            
+            # Add the new thread record to the database
+            await add_thread(connection, thread_id, user_id, thread_name)
+            logger.info(f"✅ New thread '{thread_name}' created and stored for user {user_id}.")
+
+    except Exception as e:
+        logger.error(f"Database error in name_and_store_thread: {e}")
+        return {"error": str(e)}
+        
+    finally:
+        #release the connection back to the pool
+        if connection:
+            await connection.close()
+
+    # Return an empty dictionary to signal completion 
+    return {}
+    
+
 # Create our Agent Graph
 builder = StateGraph(AgentState, config_schema=Configuration)
 
@@ -200,6 +248,7 @@ builder.add_node("generate_query",generate_query)
 builder.add_node("search_relevant", search_relevant)  
 builder.add_node("store_known_knowledge", store_known_knowledge) 
 builder.add_node("central_response_node", central_response_node)
+builder.add_node("store_thread",name_and_store_thread)
 
 
 
@@ -210,7 +259,9 @@ builder.add_edge("store_known_knowledge", "__end__")# this add edge from store t
 
 
 #add inside graph connection edge, like adding logic of the agent
-builder.add_edge("generate_learning_goals", "generate_query")
+builder.add_edge("generate_learning_goals", "store_thread")
+builder.add_edge("store_thread", "generate_query")
+
 builder.add_edge("generate_query", "search_relevant") 
 builder.add_edge("search_relevant", "central_response_node")
 

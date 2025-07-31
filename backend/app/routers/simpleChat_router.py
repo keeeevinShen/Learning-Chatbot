@@ -32,7 +32,9 @@ async def chat_with_agent(
             config = {
                 "configurable": {
                     "thread_id": thread_id,  # for state persistence
+                    "user_id": current_user.id
                 }
+
             }
 
             input_state = {
