@@ -199,6 +199,7 @@ builder.add_node("generate_learning_goals",generate_learning_goals)
 builder.add_node("generate_query",generate_query)
 builder.add_node("search_relevant", search_relevant)  
 builder.add_node("store_known_knowledge", store_known_knowledge) 
+builder.add_node("central_response_node", central_response_node)
 
 
 
@@ -211,6 +212,7 @@ builder.add_edge("store_known_knowledge", "__end__")# this add edge from store t
 #add inside graph connection edge, like adding logic of the agent
 builder.add_edge("generate_learning_goals", "generate_query")
 builder.add_edge("generate_query", "search_relevant") 
+builder.add_edge("search_relevant", "central_response_node")
 
 
 builder.add_conditional_edges(
