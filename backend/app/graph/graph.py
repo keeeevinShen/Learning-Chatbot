@@ -11,7 +11,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from .state import *
 from .schemas import *
 from .configuration import Configuration
-from .prompts import Learning_mode_prompt
+from .prompts import get_learning_mode_prompt
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import chromadb
 from ..core.chroma_db import chroma_manager
@@ -84,8 +84,7 @@ def generate_query(state: AgentState, config: RunnableConfig):
 
     # Format the prompt with system message and user content
     checkpoints_str = "\n".join(state.get('learning_checkpoints', []))
-    formatted_prompt = [
-        Learning_mode_prompt,  # System message for learning mode
+    formatted_prompt = [  # System message for learning mode
         HumanMessage(content=f"Based on the learning checkpoints:\n{checkpoints_str}\n\ngenerate queries that can retrive students known knowledge from the vectorized database.")
     ]
     
@@ -157,11 +156,10 @@ def central_response_node(state: AgentState, config: RunnableConfig):
     learning_checkpoints = state.get('learning_checkpoints', [])
     known_knowledge = state.get('KnownKnowledge', [])
     history_messages = state.get('history_messages', [])
-
+    learning_mode_prompt= get_learning_mode_prompt(learning_checkpoints,known_knowledge)
+    
     prompt = [
-        SystemMessage(content=Learning_mode_prompt),
-        learning_checkpoints,
-        known_knowledge,
+        SystemMessage(content=learning_mode_prompt),
         *history_messages
     ]
 
