@@ -29,20 +29,19 @@ async def chat_with_agent(
     async def stream_agent_response():
         """Stream responses directly from your LangGraph agent"""
         try:
-            # Prepare agent state - clean and simple
-            state = {
-                "thread_id": thread_id,
-                "user_id": str(current_user.id),
-                "history_messages": [HumanMessage(content=message)],
-                "search_query": [],
-                "learning_checkpoints": [],
-                "KnownKnowledge": [],
-                "response": None,
-                "error": None
+            config = {
+                "configurable": {
+                    "thread_id": thread_id,  # for state persistence
+                }
+            }
+
+            input_state = {
+                "history_messages": [HumanMessage(content=message)]
+                # LangGraph merges this with existing state automatically
             }
             
             # Stream directly from your agent - uses default config!
-            async for event in graph.astream(state):
+            async for event in graph.astream(input_state, config):
                 for node_name, node_data in event.items():
                     
                     # Learning goals step
@@ -61,7 +60,7 @@ async def chat_with_agent(
                             yield f"data: 🔍 *Drawing from your learning materials...*\n\n"
                     
                     # Final response step
-                    elif node_name == "generate_response":
+                    elif node_name == "central_chat":
                         response = node_data.get("response", "")
                         if response:
                             yield f"data: \n**Answer:**\n\n"
@@ -72,6 +71,10 @@ async def chat_with_agent(
                                 # Optional: add tiny delay for dramatic effect
                                 # await asyncio.sleep(0.01)
                             yield f"data: \n\n"
+
+                    elif node_name == "store_known_knowledge":
+                        yield f"data: ✅ I have also stored what you learnt in this conversation into your personal knowledge database, used for future reference.\n\n"
+
                             
         except Exception as e:
             logger.error(f"Agent error: {e}")
