@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 _pool = None
-
+#a dependecy to get connection
 async def get_db_session():
     global _pool
     if not _pool:

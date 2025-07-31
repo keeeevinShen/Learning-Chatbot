@@ -15,6 +15,9 @@ from .prompts import Learning_mode_prompt
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import chromadb
 from ..core.chroma_db import chroma_manager
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -92,11 +95,8 @@ def generate_query(state: AgentState, config: RunnableConfig):
 
 
 
-
-
 #using the qeury to perform RAG search too find the known knowledge
-def search_relevant(state: AgentState, config: RunnableConfig):
-    configurable = Configuration.from_runnable_config(config)
+def search_relevant(state: AgentState):
     search_queries = state.get('search_query', [])
     vectorized_queries = chroma_manager.embedding_model.embed_documents(search_queries)
 
@@ -111,32 +111,47 @@ def search_relevant(state: AgentState, config: RunnableConfig):
 
 
 
-
-
-
-
-
-
-
-
 #final step to store the knowledge to the RAG system  ,   this will only be called when LLM think we finish our learning, and call this node. 
 def store_known_knowledge(state: AgentState):
     topic = state["topic"]
     content_list = state["learning_checkpoints"]  # this is a list[str]
+    try: 
+        combined_content = "\n\n".join(content_list)
 
-    combined_content = "\n\n".join(content_list)
+        collection = chroma_manager.get_collection("learning_materials")
+        embeddings = chroma_manager.embedding_model.embed_documents([combined_content])
 
-    collection = chroma_manager.get_collection("learning_materials")
-    embeddings = chroma_manager.embedding_model.embed_documents([combined_content])
+        collection.add(
+                embeddings=embeddings,
+                documents=[combined_content],
+                ids=[topic],
+                metadatas = [{"topic": topic} ]
+            )
+        
+        logger.info(f"Successfully stored knowledge for topic: {topic}")
 
-    collection.add(
-            embeddings=embeddings,
-            documents=[combined_content],
-            ids=[topic],
-            metadatas = [{"topic": topic} ]
-        )
+    except Exception as e: 
+            logger.error(f"Failed to store knowledge for topic '{topic}': {str(e)}")
 
+        
     return {}
+
+
+
+
+#the central conversation node 
+def central_response_node(state: AgentState, config: RunnableConfig):
+    configurable = Configuration.from_runnable_config(config)
+    
+
+# init Gemini (model depends on user choose fast or smart)
+    llm = ChatGoogleGenerativeAI(
+        model=configurable.query_generator_model,
+        temperature=1.0,
+        max_retries=2,
+        api_key=os.getenv("GEMINI_API_KEY"),
+    )
+    structured_llm = llm.with_structured_output()
 
 
 
@@ -145,12 +160,29 @@ def store_known_knowledge(state: AgentState):
 # Create our Agent Graph
 builder = StateGraph(AgentState, config_schema=Configuration)
 
+
+#add nodes
 builder.add_node("generate_learning_goals",generate_learning_goals)
 builder.add_node("generate_query",generate_query)
+builder.add_node("search_relevant", search_relevant)  
+builder.add_node("store_known_knowledge", store_known_knowledge) 
 
 
 
-graph = builder.compile(name="pro-search-agent")
+
+#add the in and out edge
+builder.add_edge("__start__", "generate_learning_goals") # this add edge from start to gen goals
+builder.add_edge("store_known_knowledge", "__end__")# this add edge from store to end 
+
+
+#add inside graph connection edge, like adding logic of the agent
+builder.add_edge("generate_learning_goals", "generate_query")
+builder.add_edge("generate_query", "search_relevant") 
+
+
+
+#compile and have it avaible
+graph = builder.compile(name="Learning-agent")
 
 
 
