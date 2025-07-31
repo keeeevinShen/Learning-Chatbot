@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 import asyncpg
 
-from ..models.operations import find_or_create_user_traditional
+from ..models.operations import find_or_create_user_traditional,get_user_threads
 from ..database.session import get_db_session
 from .google_login_router import create_access_token  # Reusing your JWT creation function
 
@@ -41,6 +41,9 @@ async def traditional_login(
                 detail="Account is deactivated"
             )
 
+        # Get user's latest 10 threads
+        user_threads = await get_user_threads(connection, user['id'], limit=10)
+
         # Create and set the session token
         session_token = create_access_token(data={"sub": str(user['id'])})
         response.set_cookie(
@@ -55,10 +58,19 @@ async def traditional_login(
         return {
             "user": {
                 "id": user['id'],
-                "name": user['name'],
+                "name": user.get('name'),
                 "email": user['email'],
-                "picture": user['picture']
-            }
+                "picture": user.get('picture')
+            },
+            "threads": [
+                {
+                    "thread_id": thread['thread_id'],
+                    "thread_name": thread['thread_name'],
+                    "created_at": thread['created_at'].isoformat() if thread['created_at'] else None,
+                    "updated_at": thread['updated_at'].isoformat() if thread['updated_at'] else None
+                }
+                for thread in user_threads
+            ]
         }
         
     except ValueError as e:

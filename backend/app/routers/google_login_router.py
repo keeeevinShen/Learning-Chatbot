@@ -11,7 +11,7 @@ load_dotenv(find_dotenv())
 
 # Import the authentication function from services and find_or_create_user from operations
 from ..services.google_login import authenticate_google_user
-from ..models.operations import find_or_create_user
+from ..models.operations import find_or_create_user,get_user_threads
 from ..database.session import get_db_session
 
 router = APIRouter(
@@ -44,7 +44,7 @@ def create_access_token(data: dict):
 async def google_auth_callback(
     payload: GoogleAuthPayload, 
     response: Response,
-    db_connection: asyncpg.Connection = Depends(get_db_session)  # Changed from AsyncSession
+    db_connection: asyncpg.Connection = Depends(get_db_session)
 ):
     """
     This endpoint is called by the frontend after it receives the
@@ -66,31 +66,45 @@ async def google_auth_callback(
         user_data = auth_result.get("user")
         
         # 2. Find or create the user in your database
-        user = await find_or_create_user(db_connection, user_data)  # Now returns a dict
+        user = await find_or_create_user(db_connection, user_data)
         
-        # 3. Create a session token (JWT) for the user
-        session_token = create_access_token(data={"sub": str(user['id'])})  # Access dict key
+        # 3. Get user's latest 10 threads
+        user_threads = await get_user_threads(db_connection, user['id'], limit=10)
+        
+        # 4. Create a session token (JWT) for the user
+        session_token = create_access_token(data={"sub": str(user['id'])})
 
         # Remember to set secure to True when hosting live 
         response.set_cookie(
             key="session_token", 
             value=session_token,
-            httponly=True,        # Prevents JavaScript from reading the cookie
-            secure=False,         # Set to True in production with HTTPS
-            samesite='lax',       # Helps prevent CSRF attacks
-            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60  # Cookie expiration in seconds
+            httponly=True,
+            secure=False,
+            samesite='lax',
+            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
 
-        # 4. Return the user info to the frontend
+        # 5. Return the user data and their threads
         return {
             "user": {
                 "id": user['id'],
-                "name": user['name'],
+                "name": user.get('name'),
                 "email": user['email'],
-                "picture": user['picture']
-            }
+                "picture": user.get('picture')
+            },
+            "threads": [
+                {
+                    "thread_id": thread['thread_id'],
+                    "thread_name": thread['thread_name'],
+                    "created_at": thread['created_at'].isoformat() if thread['created_at'] else None,
+                    "updated_at": thread['updated_at'].isoformat() if thread['updated_at'] else None
+                }
+                for thread in user_threads
+            ]
         }
 
     except Exception as e:
-        # Handle any unexpected errors
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Authentication failed: {str(e)}"
+        )

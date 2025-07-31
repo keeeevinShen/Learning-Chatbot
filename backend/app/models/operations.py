@@ -313,17 +313,19 @@ async def get_user_by_id(
 
 async def get_user_threads(
     connection: asyncpg.Connection,
-    user_id: int
+    user_id: int,
+    limit: Optional[int] = None
 ) -> list[Dict[str, Any]]:
     """
-    Get all threads for a specific user.
+    Get threads for a specific user, optionally limited.
     
     Args:
         connection: AsyncPG database connection
         user_id: User's ID
+        limit: Maximum number of threads to return (None for all)
         
     Returns:
-        List of thread data dicts
+        List of thread data dicts ordered by created_at DESC
     """
     query = """
         SELECT thread_id, user_id, thread_name, created_at, updated_at
@@ -331,6 +333,9 @@ async def get_user_threads(
         WHERE user_id = $1
         ORDER BY created_at DESC
     """
+    
+    if limit is not None:
+        query += f" LIMIT {limit}"
     
     rows = await connection.fetch(query, user_id)
     return [dict(row) for row in rows]
