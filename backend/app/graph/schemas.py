@@ -42,7 +42,15 @@ class checkpoints(BaseModel):
     goals: List[str] = Field(description="concepts we trying to learn")
 
 
-
+class LearningResponse(BaseModel):
+    """Simple structured output for the central chat node"""
+    response_text: str = Field(description="The conversational response to send to the user")
+    
+    next_action: Literal["continue_learning", "store_knowledge"] = Field(
+        description="""continue_learning = send message and wait for user reply, continue_learning is used when you think student havn't finish understanding all the checkpoints yet
+        store_knowledge = user has mastered all checkpoints
+        """
+    )
 
 
 

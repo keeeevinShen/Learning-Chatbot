@@ -7,7 +7,7 @@ from langgraph.graph.message import add_messages
 from google.genai import Client
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.runnables import RunnableConfig
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from .state import *
 from .schemas import *
 from .configuration import Configuration
@@ -151,7 +151,35 @@ def central_response_node(state: AgentState, config: RunnableConfig):
         max_retries=2,
         api_key=os.getenv("GEMINI_API_KEY"),
     )
-    structured_llm = llm.with_structured_output()
+
+    structured_llm = llm.with_structured_output(LearningResponse)
+
+    learning_checkpoints = state.get('learning_checkpoints', [])
+    known_knowledge = state.get('KnownKnowledge', [])
+    history_messages = state.get('history_messages', [])
+
+    prompt = [
+        SystemMessage(content=Learning_mode_prompt),
+        learning_checkpoints,
+        known_knowledge,
+        *history_messages
+    ]
+
+    try: 
+        result = structured_llm.invoke(prompt)
+
+        return {
+            "response": result.response_text,
+            "learning_complete": (result.next_action == "store_knowledge")
+        }
+    except Exception as e:
+        logger.error(f"Error in central_response_node: {e}")
+        return {
+            "response": "I'm having trouble processing your response. Could you please rephrase your question?",
+            "error": str(e)
+        }
+
+    
 
 
 

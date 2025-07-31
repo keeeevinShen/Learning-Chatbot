@@ -31,7 +31,8 @@ class AgentState(TypedDict):
 
     #knowledge can used to explain after perform RAG 
     KnownKnowledge: Annotated[list[str], operator.add]
-
+    
+    learning_complete: bool = False
     error: Optional[str]
 
     
