@@ -1,13 +1,11 @@
 # backend/app/routers/traditional_login_router.py
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+import asyncpg
 
-from ..models.user import User
-from ..database.session import get_database_session
-from ..services.password_service import verify_password
-from .google_login_router import create_access_token # Reusing your JWT creation function
+from ..models.operations import find_or_create_user_traditional
+from ..database.session import get_db_session
+from .google_login_router import create_access_token  # Reusing your JWT creation function
 
 router = APIRouter(
     prefix="/api/auth",
@@ -22,37 +20,56 @@ class TraditionalLoginPayload(BaseModel):
 async def traditional_login(
     payload: TraditionalLoginPayload,
     response: Response,
-    db_session: AsyncSession = Depends(get_database_session)
+    connection: asyncpg.Connection = Depends(get_db_session)
 ):
-    # Find the user by email
-    stmt = select(User).where(User.email == payload.email)
-    result = await db_session.execute(stmt)
-    user = result.scalar_one_or_none()
+    """
+    Traditional email/password login endpoint.
+    If user exists, verifies password. If not, creates new account.
+    """
+    try:
+        # Find existing user or create new one
+        user = await find_or_create_user_traditional(
+            connection, 
+            payload.email, 
+            payload.password
+        )
+        
+        # Check if account is active
+        if not user.get('is_active', True):
+            raise HTTPException(
+                status_code=403,
+                detail="Account is deactivated"
+            )
 
-    # Check if user exists and password is correct
-    if not user or not user.hashed_password or not verify_password(payload.password, user.hashed_password):
-        raise HTTPException(
-            status_code=401,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+        # Create and set the session token
+        session_token = create_access_token(data={"sub": str(user['id'])})
+        response.set_cookie(
+            key="session_token",
+            value=session_token,
+            httponly=True,
+            secure=False,  # Set to True in production with HTTPS
+            samesite='lax',
+            max_age=50000 * 60
         )
 
-    # Create and set the session token
-    session_token = create_access_token(data={"sub": str(user.id)})
-    response.set_cookie(
-        key="session_token",
-        value=session_token,
-        httponly=True,
-        secure=False, # Set to True in production
-        samesite='lax',
-        max_age=50000 * 60
-    )
-
-    return {
-        "user": {
-            "id": user.id,
-            "name": user.name,
-            "email": user.email,
-            "picture": user.picture
+        return {
+            "user": {
+                "id": user['id'],
+                "name": user['name'],
+                "email": user['email'],
+                "picture": user['picture']
+            }
         }
-    }
+        
+    except ValueError as e:
+        # This catches password verification errors
+        raise HTTPException(
+            status_code=401,
+            detail=str(e),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Login failed: {str(e)}"
+        )
