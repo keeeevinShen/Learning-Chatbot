@@ -53,6 +53,12 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+
+
+
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+DROP TRIGGER IF EXISTS update_threads_updated_at ON threads;
+
 -- Trigger to call the function on UPDATE for users table
 CREATE TRIGGER update_users_updated_at 
     BEFORE UPDATE ON users 
@@ -65,6 +71,3 @@ CREATE TRIGGER update_threads_updated_at
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
--- You can add more tables here as your app grows
--- CREATE TABLE IF NOT EXISTS messages (...);
--- CREATE TABLE IF NOT EXISTS chat_history (...);
