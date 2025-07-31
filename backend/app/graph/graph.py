@@ -17,6 +17,9 @@ import chromadb
 from ..core.chroma_db import chroma_manager
 import logging
 
+from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.checkpoint.redis import RedisSaver
+
 logger = logging.getLogger(__name__)
 
 
@@ -157,7 +160,7 @@ def central_response_node(state: AgentState, config: RunnableConfig):
     known_knowledge = state.get('KnownKnowledge', [])
     history_messages = state.get('history_messages', [])
     learning_mode_prompt= get_learning_mode_prompt(learning_checkpoints,known_knowledge)
-    
+
     prompt = [
         SystemMessage(content=learning_mode_prompt),
         *history_messages
@@ -206,9 +209,13 @@ builder.add_edge("generate_learning_goals", "generate_query")
 builder.add_edge("generate_query", "search_relevant") 
 
 
+checkpointer = SqliteSaver.from_conn_string("learning_checkpoints.db")
 
 #compile and have it avaible
-graph = builder.compile(name="Learning-agent")
+graph = builder.compile(
+    name="Learning-agent",
+    checkpointer=checkpointer
+)
 
 
 
