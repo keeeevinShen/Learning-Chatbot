@@ -183,7 +183,11 @@ def central_response_node(state: AgentState, config: RunnableConfig):
     
 
 
-
+def should_continue(state: AgentState) -> str:
+    if state.get("learning_complete"):
+        return "continue_to_store_known_knowledge"
+    else:
+        return "wait_for_next_human_input"
 
 
 # Create our Agent Graph
@@ -207,6 +211,16 @@ builder.add_edge("store_known_knowledge", "__end__")# this add edge from store t
 #add inside graph connection edge, like adding logic of the agent
 builder.add_edge("generate_learning_goals", "generate_query")
 builder.add_edge("generate_query", "search_relevant") 
+
+
+builder.add_conditional_edges(
+    "central_response_node",
+    should_continue,
+    {
+        "continue_to_store_known_knowledge": "store_known_knowledge",
+        "wait_for_next_human_input": "__end__"   #this go to end, which means waiting for next api call, next human input
+    }
+)
 
 
 checkpointer = SqliteSaver.from_conn_string("learning_checkpoints.db")
