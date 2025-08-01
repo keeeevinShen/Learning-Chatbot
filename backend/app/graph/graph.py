@@ -7,7 +7,7 @@ from langgraph.graph.message import add_messages
 from google.genai import Client
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.runnables import RunnableConfig
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from .state import *
 from .schemas import *
 from .configuration import Configuration
@@ -150,8 +150,7 @@ def store_known_knowledge(state: AgentState):
 def central_response_node(state: AgentState, config: RunnableConfig):
     configurable = Configuration.from_runnable_config(config)
     
-
-# init Gemini (model depends on user choose fast or smart)
+    # init Gemini (model depends on user choose fast or smart)
     llm = ChatGoogleGenerativeAI(
         model=configurable.query_generator_model,
         temperature=1.0,
@@ -173,15 +172,17 @@ def central_response_node(state: AgentState, config: RunnableConfig):
 
     try: 
         result = structured_llm.invoke(prompt)
-
+        new_history = history_messages + [AIMessage(content=result.response_text)]
         return {
-            "response": result.response_text,
+            "history_messages": new_history,
             "learning_complete": (result.next_action == "store_knowledge")
         }
     except Exception as e:
         logger.error(f"Error in central_response_node: {e}")
+        error_message = "I'm having trouble processing your response. Could you please rephrase your question?"
+        new_history = history_messages + [AIMessage(content=error_message)]
         return {
-            "response": "I'm having trouble processing your response. Could you please rephrase your question?",
+            "history_messages": new_history,
             "error": str(e)
         }
 

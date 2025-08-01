@@ -18,8 +18,6 @@ class AgentState(TypedDict):
     # Core conversation data
     history_messages: Annotated[list[AnyMessage], add_messages]
 
-    # Output and supporting data
-    response: Optional[str]    
 
     #place we store the search quries generate by LLM
     search_query: Annotated[list, operator.add]

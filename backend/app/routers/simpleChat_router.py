@@ -39,7 +39,7 @@ async def chat_with_agent(
 
             input_state = {
                 "history_messages": [HumanMessage(content=message)]
-                # LangGraph merges this with existing state automatically
+                # LangGraph merges this with existing state automaticallys
             }
             
             # Stream directly from your agent - uses default config!
@@ -63,11 +63,12 @@ async def chat_with_agent(
                     
                     # Final response step
                     elif node_name == "central_chat":
-                        response = node_data.get("response", "")
-                        if response:
+                        response = node_data.get("history_messages", "")[-1]
+                        response_content = response.content
+                        if response_content:
                             yield f"data: \n**Answer:**\n\n"
                             # Stream word by word for better UX
-                            words = response.split()
+                            words = response_content.split()
                             for word in words:
                                 yield f"data: {word} "
                                 # Optional: add tiny delay for dramatic effect
