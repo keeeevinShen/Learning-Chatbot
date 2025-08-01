@@ -100,75 +100,132 @@ const ChatPage = () => {
   };
 
   const handleStreamingMessage = async (inputValue, files, currentChat, updatedChat, feynmanMode = false) => {
-    // Create a streaming bot message
+    // Create a placeholder for the bot's response
     const botMessageId = Date.now() + 1;
     const initialBotMessage = {
       id: botMessageId,
       type: 'bot',
       content: '',
-      isStreaming: true
+      isStreaming: true,
     };
-
     streamingBotMessageRef.current = botMessageId;
-
+  
+    // Add the placeholder message to the chat
     const chatWithInitialBotMessage = {
       ...updatedChat,
-      messages: [...updatedChat.messages, initialBotMessage]
+      messages: [...updatedChat.messages, initialBotMessage],
     };
-
+  
     setActiveChat(chatWithInitialBotMessage);
-    setChats(prevChats => prevChats.map(chat => 
-      chat.id === chatWithInitialBotMessage.id ? chatWithInitialBotMessage : chat
-    ));
-
+    setChats(prevChats =>
+      prevChats.map(chat =>
+        // This line is now fixed
+        chat.id === chatWithInitialBotMessage.id ? chatWithInitialBotMessage : chat
+      )
+    );
+  
     try {
-      // Your existing streaming logic here
-      // Make sure to use currentChat.id as the thread_id when calling backend APIs
+      const formData = new FormData();
+      formData.append('message', inputValue);
+      formData.append('thread_id', currentChat.id);
+  
+      const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/simplechat`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = '';
+      let currentActiveChat = chatWithInitialBotMessage;
+  
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+  
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+  
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+  
+            // Check for the special thread update message
+            if (data.startsWith('__THREAD_UPDATE__')) {
+              try {
+                const threadData = JSON.parse(data.substring(17));
+                
+                // Update the title in the active chat and the sidebar list
+                currentActiveChat = { ...currentActiveChat, title: threadData.thread_name };
+                setActiveChat(currentActiveChat);
+                setChats(prevChats =>
+                  prevChats.map(chat =>
+                    chat.id === threadData.thread_id
+                      ? { ...chat, title: threadData.thread_name }
+                      : chat
+                  )
+                );
+                
+              } catch (error) {
+                console.error('Error parsing thread update:', error);
+              }
+              continue; // Move to the next line
+            }
+  
+            // Add regular message content
+            accumulatedContent += data;
+            
+            // Update the bot's message content in real-time
+            const updatedMessages = currentActiveChat.messages.map(msg =>
+              msg.id === botMessageId
+                ? { ...msg, content: accumulatedContent }
+                : msg
+            );
+            
+            currentActiveChat = { ...currentActiveChat, messages: updatedMessages };
+            setActiveChat(currentActiveChat);
+          }
+        }
+      }
       
-      // Simulate streaming for now
-      setTimeout(() => {
-        const finalBotMessage = {
-          id: botMessageId,
-          type: 'bot',
-          content: 'This is a response from the bot.',
-          isStreaming: false
-        };
-
-        const finalChat = {
-          ...chatWithInitialBotMessage,
-          messages: chatWithInitialBotMessage.messages.map(msg =>
-            msg.id === botMessageId ? finalBotMessage : msg
-          )
-        };
-
-        setActiveChat(finalChat);
-        setChats(prevChats => prevChats.map(chat =>
-          chat.id === finalChat.id ? finalChat : chat
-        ));
-        setIsLoading(false);
-        streamingBotMessageRef.current = null;
-      }, 1000);
-      
+      // Finalize the chat state by updating the main list
+      setChats(prevChats =>
+        prevChats.map(c => (c.id === currentActiveChat.id ? currentActiveChat : c))
+      );
+  
     } catch (error) {
       console.error('Streaming error:', error);
-      
-      const errorBotMessage = {
-        id: botMessageId,
-        type: 'bot',
-        content: 'Sorry, there was an error processing your message. Please try again.',
-        isStreaming: false
-      };
-
-      const chatWithErrorMessage = {
-        ...updatedChat,
-        messages: [...updatedChat.messages, errorBotMessage]
-      };
-
-      setActiveChat(chatWithErrorMessage);
-      setChats(prevChats => prevChats.map(chat => 
-        chat.id === chatWithErrorMessage.id ? chatWithErrorMessage : chat
-      ));
+      // Show an error message to the user
+      setActiveChat(prevChat => {
+        const errorBotMessage = {
+          id: botMessageId,
+          type: 'bot',
+          content: 'Sorry, an error occurred. Please try again.',
+          isStreaming: false,
+        };
+        const finalMessages = prevChat.messages.map(m => m.id === botMessageId ? errorBotMessage : m);
+        const finalChatState = { ...prevChat, messages: finalMessages };
+        
+        // Update the main chats list with the error message state
+        setChats(prevChats => prevChats.map(c => c.id === finalChatState.id ? finalChatState : c));
+        return finalChatState;
+      });
+  
+    } finally {
+      // Stop the loading indicator and finalize the bot message
       setIsLoading(false);
+      setActiveChat(prevChat => {
+          if (!prevChat) return null;
+          const finalMessages = prevChat.messages.map(msg =>
+            msg.id === botMessageId ? { ...msg, isStreaming: false } : msg
+          );
+          return { ...prevChat, messages: finalMessages };
+      });
       streamingBotMessageRef.current = null;
     }
   };
