@@ -2,6 +2,7 @@
 # File: app/routers/simpleChat_router.py
 
 import logging
+import json
 from fastapi import APIRouter, Form, HTTPException
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage
@@ -41,7 +42,7 @@ async def chat_with_agent(
                 "history_messages": [HumanMessage(content=message)]
                 # LangGraph merges this with existing state automaticallys
             }
-            
+            thread_name = None
             # Stream directly from your agent - uses default config!
             async for event in graph.astream(input_state, config):
                 for node_name, node_data in event.items():
@@ -60,6 +61,25 @@ async def chat_with_agent(
                         knowledge = node_data.get("KnownKnowledge", [])
                         if knowledge:
                             yield f"data: 🔍 *Drawing from your learning materials...*\n\n"
+
+
+                    elif node_name == "store_thread":
+                        # Check if thread was actually created (not just checked)
+                        if not node_data.get("error"):
+                            # Extract thread name from learning goals
+                            learning_goals = node_data.get("learning_checkpoints", [])
+                            if learning_goals:
+                                thread_name = "Learning: " + ", ".join(learning_goals[:2])
+                            else:
+                                thread_name = "New Conversation"
+                                                        
+                            # Send thread metadata as special message
+                            thread_metadata = {
+                                "type": "thread_update",
+                                "thread_id": thread_id,
+                                "thread_name": thread_name
+                            }
+                            yield f"data: __THREAD_UPDATE__{json.dumps(thread_metadata)}\n\n"
                     
                     # Final response step
                     elif node_name == "central_chat":
