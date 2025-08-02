@@ -20,12 +20,13 @@ from langgraph.checkpoint.memory import MemorySaver
 
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.checkpoint.redis import RedisSaver
-
+import sqlite3
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 import logging
 from langchain_core.runnables import RunnableConfig
 from ..database.session import get_db_connection
 from ..models.operations import check_thread_exists, add_thread
-
+import asyncio
 logger = logging.getLogger(__name__)
 
 
@@ -55,7 +56,7 @@ collection = chroma_manager.get_collection()
 
 
 
-def generate_learning_goals(state: AgentState, config: RunnableConfig):
+async def generate_learning_goals(state: AgentState, config: RunnableConfig):
 
     configurable = Configuration.from_runnable_config(config)
 
@@ -69,16 +70,16 @@ def generate_learning_goals(state: AgentState, config: RunnableConfig):
 
     structured_llm = llm.with_structured_output(checkpoints)
 
-    prompt = (
-        HumanMessage(content=f"Based on the provided context: {state.get('history_messages', [])}, generate checkpoints we need to finish.")
-    )
+    prompt = state.get('history_messages', []) + [
+        HumanMessage(content="Based on our conversation, what checkpoints should we establish to achieve the learning goal?")
+    ]
 
-    result = structured_llm.invoke(prompt)
+    result = await structured_llm.ainvoke(prompt)
     return {"learning_checkpoints": result.goals}
 
 
 # second node, the node for getting the previous known knowledge, to make the learning more smooth 
-def generate_query(state: AgentState, config: RunnableConfig):
+async def generate_query(state: AgentState, config: RunnableConfig):
     
     configurable = Configuration.from_runnable_config(config)
 
@@ -98,20 +99,23 @@ def generate_query(state: AgentState, config: RunnableConfig):
     ]
     
     # Generate the search queries
-    result = structured_llm.invoke(formatted_prompt)
+    result = await structured_llm.ainvoke(formatted_prompt)
     return {"search_query": result.query}
 
 
 
 #using the qeury to perform RAG search too find the known knowledge
-def search_relevant(state: AgentState):
+async def search_relevant(state: AgentState):
     search_queries = state.get('search_query', [])
-    vectorized_queries = chroma_manager.embedding_model.embed_documents(search_queries)
+    vectorized_queries = await asyncio.to_thread(
+        chroma_manager.embedding_model.embed_documents, search_queries
+    )
 
-    results = collection.query(
-            query_embeddings=vectorized_queries,
-            n_results=5 
-        )
+    results = await asyncio.to_thread(
+        collection.query,
+        query_embeddings=vectorized_queries,
+        n_results=5
+    )
     
     retrieved_docs = [doc for doc_list in results['documents'] for doc in doc_list]
 
@@ -120,21 +124,30 @@ def search_relevant(state: AgentState):
 
 
 #final step to store the knowledge to the RAG system  ,   this will only be called when LLM think we finish our learning, and call this node. 
-def store_known_knowledge(state: AgentState):
-    topic = state["topic"]
+async def store_known_knowledge(state: AgentState):
+    learning_checkpoints = state.get("learning_checkpoints", [])
+    
+    if not learning_checkpoints:
+        logger.warning("No learning checkpoints to store")
+        return {}
+    
+    topic = state["learning_checkpoints"][0]
     content_list = state["learning_checkpoints"]  # this is a list[str]
     try: 
         combined_content = "\n\n".join(content_list)
 
         collection = chroma_manager.get_collection("learning_materials")
-        embeddings = chroma_manager.embedding_model.embed_documents([combined_content])
+        embeddings = await asyncio.to_thread(
+            chroma_manager.embedding_model.embed_documents, [combined_content]
+        )
 
-        collection.add(
-                embeddings=embeddings,
-                documents=[combined_content],
-                ids=[topic],
-                metadatas = [{"topic": topic} ]
-            )
+        await asyncio.to_thread(
+            collection.add,
+            embeddings=embeddings,
+            documents=[combined_content],
+            ids=[topic],
+            metadatas=[{"topic": topic}]
+        )
         
         logger.info(f"Successfully stored knowledge for topic: {topic}")
 
@@ -148,7 +161,7 @@ def store_known_knowledge(state: AgentState):
 
 
 #the central conversation node 
-def central_response_node(state: AgentState, config: RunnableConfig):
+async def central_response_node(state: AgentState, config: RunnableConfig):
     configurable = Configuration.from_runnable_config(config)
     
     # init Gemini (model depends on user choose fast or smart)
@@ -172,7 +185,7 @@ def central_response_node(state: AgentState, config: RunnableConfig):
     ]
 
     try: 
-        result = structured_llm.invoke(prompt)
+        result = await structured_llm.ainvoke(prompt)
         new_history = history_messages + [AIMessage(content=result.response_text)]
         return {
             "history_messages": new_history,
@@ -241,49 +254,38 @@ async def name_and_store_thread(state: AgentState, config: RunnableConfig):
     
 
 # Create our Agent Graph
-builder = StateGraph(AgentState, config_schema=Configuration)
+def get_graph(checkpointer):
+    """Builds and compiles the LangGraph agent."""
+    builder = StateGraph(AgentState, config_schema=Configuration)
 
+    # Add nodes
+    builder.add_node("generate_learning_goals", generate_learning_goals)
+    builder.add_node("generate_query", generate_query)
+    builder.add_node("search_relevant", search_relevant)
+    builder.add_node("store_known_knowledge", store_known_knowledge)
+    builder.add_node("central_response_node", central_response_node)
+    builder.add_node("store_thread", name_and_store_thread)
 
-#add nodes
-builder.add_node("generate_learning_goals",generate_learning_goals)
-builder.add_node("generate_query",generate_query)
-builder.add_node("search_relevant", search_relevant)  
-builder.add_node("store_known_knowledge", store_known_knowledge) 
-builder.add_node("central_response_node", central_response_node)
-builder.add_node("store_thread",name_and_store_thread)
+    # Add edges
+    builder.set_entry_point("generate_learning_goals")
+    builder.add_edge("store_known_knowledge", "__end__")
+    builder.add_edge("generate_learning_goals", "store_thread")
+    builder.add_edge("store_thread", "generate_query")
+    builder.add_edge("generate_query", "search_relevant")
+    builder.add_edge("search_relevant", "central_response_node")
 
+    # Add conditional edges
+    builder.add_conditional_edges(
+        "central_response_node",
+        should_continue,
+        {
+            "continue_to_store_known_knowledge": "store_known_knowledge",
+            "wait_for_next_human_input": "__end__",
+        },
+    )
 
-
-
-#add the in and out edge
-builder.add_edge("__start__", "generate_learning_goals") # this add edge from start to gen goals
-builder.add_edge("store_known_knowledge", "__end__")# this add edge from store to end 
-
-
-#add inside graph connection edge, like adding logic of the agent
-builder.add_edge("generate_learning_goals", "store_thread")
-builder.add_edge("store_thread", "generate_query")
-
-builder.add_edge("generate_query", "search_relevant") 
-builder.add_edge("search_relevant", "central_response_node")
-
-
-builder.add_conditional_edges(
-    "central_response_node",
-    should_continue,
-    {
-        "continue_to_store_known_knowledge": "store_known_knowledge",
-        "wait_for_next_human_input": "__end__"   #this go to end, which means waiting for next api call, next human input
-    }
-)
-
-
-checkpointer = MemorySaver()
-
-#compile and have it avaible
-graph = builder.compile(
-    checkpointer=checkpointer
-)
+    # Compile the graph with the provided checkpointer
+    return builder.compile(checkpointer=checkpointer)
 
 
 

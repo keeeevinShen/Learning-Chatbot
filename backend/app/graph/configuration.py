@@ -33,8 +33,8 @@ class Configuration(BaseModel):
         default=None,
         description="The ID of the conversation thread.",
     )
-    
-    user_id: Optional[str] = Field(
+
+    user_id: Optional[int] = Field( # Changed from str to int
         default=None,
         description="The ID of the user.",
     )
