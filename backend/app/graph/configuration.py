@@ -29,6 +29,16 @@ class Configuration(BaseModel):
         },
     )
 
+    thread_id: Optional[str] = Field(
+        default=None,
+        description="The ID of the conversation thread.",
+    )
+    
+    user_id: Optional[str] = Field(
+        default=None,
+        description="The ID of the user.",
+    )
+
     number_of_initial_queries: int = Field(
         default=3,
         metadata={"description": "The number of initial search queries to generate."},

@@ -33,14 +33,15 @@ async def chat_with_agent(
             config = {
                 "configurable": {
                     "thread_id": thread_id,  # for state persistence
-                    "user_id": current_user['id']
+                    "user_id": str(current_user['id'])
                 }
 
             }
 
             input_state = {
-                "history_messages": [HumanMessage(content=message)]
-                # LangGraph merges this with existing state automaticallys
+                "history_messages": [HumanMessage(content=message)], # LangGraph merges this with existing state automaticallys
+                "thread_id":thread_id,
+                "user_id": str(current_user['id'])
             }
             thread_name = None
             # Stream directly from your agent - uses default config!
@@ -82,7 +83,7 @@ async def chat_with_agent(
                             yield f"data: __THREAD_UPDATE__{json.dumps(thread_metadata)}\n\n"
                     
                     # Final response step
-                    elif node_name == "central_chat":
+                    elif node_name == "central_response_node":
                         response = node_data.get("history_messages", "")[-1]
                         response_content = response.content
                         if response_content:
