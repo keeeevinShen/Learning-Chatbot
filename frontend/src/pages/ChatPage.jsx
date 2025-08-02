@@ -9,7 +9,7 @@ import { fetchChats } from '../service/chatService';
 import { useAuth } from '../context/AuthContext';
 
 const ChatPage = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
