@@ -44,6 +44,11 @@ async def chat_with_agent(
                 "user_id": str(current_user['id'])
             }
             thread_name = None
+
+            logger.info(f"Starting graph stream for thread: {thread_id}, user: {current_user['id']}")
+            logger.debug(f"Input state: {input_state}")
+            logger.debug(f"Config: {config}")
+            
             # Stream directly from your agent - uses default config!
             async for event in graph.astream(input_state, config):
                 for node_name, node_data in event.items():
