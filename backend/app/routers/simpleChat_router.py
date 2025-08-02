@@ -17,14 +17,14 @@ router = APIRouter()
 async def chat_with_agent(
     message: str = Form(...),  # Required message
     thread_id: str = Form(...),  # Required thread ID
-    current_user: User = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     🎯 Ultra-Simple Chat - Direct Agent Integration
     
     Clean and simple: message + thread_id required, direct agent integration, full streaming.
     """
-    if not current_user.is_active:
+    if not current_user.get('is_active', True):
         raise HTTPException(status_code=403, detail="Account suspended")
     
     async def stream_agent_response():
@@ -33,7 +33,7 @@ async def chat_with_agent(
             config = {
                 "configurable": {
                     "thread_id": thread_id,  # for state persistence
-                    "user_id": current_user.id
+                    "user_id": current_user['id']
                 }
 
             }
