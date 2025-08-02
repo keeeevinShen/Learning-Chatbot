@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
@@ -8,8 +8,18 @@ const GoogleCallback = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { loginWithGoogle, isAuthenticated, user } = useAuth();
+  
+  // Use a ref to prevent the effect from running multiple times in StrictMode
+  const processingRef = useRef(false);
 
   useEffect(() => {
+    // If the request is already being processed or has been processed, do nothing.
+    if (processingRef.current) {
+      return;
+    }
+    // Set the ref to true immediately to prevent subsequent runs.
+    processingRef.current = true;
+
     const handleGoogleCallback = async () => {
       try {
         // Check if user is already authenticated
@@ -26,27 +36,22 @@ const GoogleCallback = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
         const state = urlParams.get('state');
-        const error = urlParams.get('error');
+        const googleError = urlParams.get('error');
         
         console.log('Google callback - URL state:', state);
         
         // Check if there was an error from Google
-        if (error) {
-          throw new Error(`Google OAuth error: ${error}`);
+        if (googleError) {
+          throw new Error(`Google OAuth error: ${googleError}`);
         }
         
         // Verify state parameter to prevent CSRF attacks
         const storedState = sessionStorage.getItem('oauth_state');
         console.log('Google callback - Stored state:', storedState);
-        console.log('Google callback - URL state:', state);
-        console.log('Google callback - States match:', state === storedState);
         
-        // More flexible state validation - warn but don't fail if states don't match
-        // This handles cases where sessionStorage is cleared by browser privacy settings
         if (!state || state !== storedState) {
           console.warn('State parameter mismatch - this might be due to browser privacy settings clearing sessionStorage');
-          // Don't throw error here, just log the warning
-          // Some browsers clear sessionStorage during OAuth flows, especially in private mode
+          // This is a warning, not a fatal error, as some browsers clear sessionStorage.
         }
         
         // Clear the stored state regardless
@@ -76,7 +81,6 @@ const GoogleCallback = () => {
             const errorData = await response.json();
             errorMessage = errorData.detail || errorData.message || errorMessage;
           } catch (jsonError) {
-            // If response is not JSON, try to get text
             try {
               const errorText = await response.text();
               errorMessage = errorText || errorMessage;
@@ -96,21 +100,18 @@ const GoogleCallback = () => {
         
         console.log('Google callback - Backend response:', data);
         
-        // Use the real user data returned from backend
         const googleAuthData = {
-          user: data.user, // Use actual user data from backend
-          token: 'google-auth-token-' + Date.now() // Create a token since backend uses cookies
+          user: data.user,
+          token: 'google-auth-token-' + Date.now()
         };
         
         console.log('Google callback - Attempting to login with data:', googleAuthData);
         
-        // Use the Google login method from AuthContext
         const result = await loginWithGoogle(googleAuthData);
         
         if (result.success) {
           console.log('Google callback - Login successful');
           setStatus('success');
-          // Redirect to chat page after a short delay
           setTimeout(() => {
             navigate('/');
           }, 1500);
@@ -121,7 +122,6 @@ const GoogleCallback = () => {
       } catch (err) {
         console.error('Google OAuth callback error:', err);
         
-        // Check again if user got authenticated despite the error
         if (isAuthenticated && user) {
           console.log('Google callback - User authenticated despite error, redirecting to chat');
           setStatus('success');
@@ -134,15 +134,18 @@ const GoogleCallback = () => {
         setError(err.message);
         setStatus('error');
         
-        // Redirect back to login page after showing error
         setTimeout(() => {
           navigate('/login');
         }, 3000);
       }
+      // No finally block needed to reset the ref, as this component should only process once.
     };
 
     handleGoogleCallback();
-  }, [navigate, loginWithGoogle, isAuthenticated, user]);
+    
+  // We use an empty dependency array because this effect should only run ONCE when the component mounts.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center p-4">
@@ -178,4 +181,4 @@ const GoogleCallback = () => {
   );
 };
 
-export default GoogleCallback; 
+export default GoogleCallback;
