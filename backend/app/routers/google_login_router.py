@@ -6,6 +6,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 import asyncpg
+import logging
 
 load_dotenv(find_dotenv())
 
@@ -104,6 +105,8 @@ async def google_auth_callback(
         }
 
     except Exception as e:
+        logging.error("Error in google_auth_callback", exc_info=True)
+
         raise HTTPException(
             status_code=500,
             detail=f"Authentication failed: {str(e)}"

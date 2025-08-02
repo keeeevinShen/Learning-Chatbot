@@ -2,9 +2,9 @@
 
 import os
 import asyncpg
-from dotenv import load_dotenv
+from dotenv import load_dotenv,find_dotenv
 
-load_dotenv()
+load_dotenv(find_dotenv())
 _pool = None
 #a dependecy to get connection
 async def get_db_session():
@@ -44,6 +44,12 @@ async def create_tables():
     """
     global _pool
     if not _pool:
+        print("--- DATABASE CONNECTION DEBUG ---")
+        print(f"HOST: {os.getenv('DB_HOST', 'localhost')}")
+        print(f"PORT: {os.getenv('DB_PORT', '5432')}")
+        print(f"USER: {os.getenv('DB_USER', 'postgres')}")
+        print("---------------------------------")
+
         _pool = await asyncpg.create_pool(
             host=os.getenv("DB_HOST", "localhost"),
             port=int(os.getenv("DB_PORT", "5432")),

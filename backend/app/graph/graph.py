@@ -16,6 +16,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import chromadb
 from ..core.chroma_db import chroma_manager
 import logging
+from langgraph.checkpoint.memory import MemorySaver
 
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.checkpoint.redis import RedisSaver
@@ -277,11 +278,10 @@ builder.add_conditional_edges(
 )
 
 
-checkpointer = SqliteSaver.from_conn_string("learning_checkpoints.db")
+checkpointer = MemorySaver()
 
 #compile and have it avaible
 graph = builder.compile(
-    name="Learning-agent",
     checkpointer=checkpointer
 )
 

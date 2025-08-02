@@ -7,7 +7,7 @@ from fastapi import APIRouter, Form, HTTPException
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage
 from ..graph.graph import graph
-from auth_dependencies import *
+from .auth_dependencies import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
