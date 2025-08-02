@@ -15,7 +15,7 @@ const ChatPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const streamingBotMessageRef = useRef(null);
-  const { userThreads } = useAuth();
+  const { userThreads, loading: authLoading } = useAuth(); // Get the auth loading state
 
   // Initialize chats from userThreads or fetch them
   useEffect(() => {
@@ -257,7 +257,7 @@ const ChatPage = () => {
 
         <MessageInput
           onSendMessage={handleSendMessage}
-          isLoading={isLoading}
+          isLoading={isLoading || authLoading} // Combine both loading states
         />
       </div>
     </div>

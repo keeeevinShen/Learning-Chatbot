@@ -34,6 +34,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
+    setLoading(true); // Set loading to true when login starts
     try {
       const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/api/auth/login`, {
         method: 'POST',
@@ -85,10 +86,13 @@ export const AuthProvider = ({ children }) => {
       }
       
       return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false); // Set loading to false when login completes
     }
   };
 
   const loginWithGoogle = async (googleAuthData) => {
+    setLoading(true); // Set loading to true
     try {
       const { user: googleUser, threads = [] } = googleAuthData;
       
@@ -108,6 +112,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Google login error:', error);
       return { success: false, error: error.message || 'Google login failed' };
+    } finally {
+      setLoading(false); // Set loading to false
     }
   };
 
@@ -164,7 +170,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUser,
     updateThreads,
-    loading
+    loading // Expose the loading state
   };
 
   return (
