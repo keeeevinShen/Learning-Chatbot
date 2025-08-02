@@ -52,6 +52,7 @@ async def traditional_login(
             httponly=True,
             secure=False,  # Set to True in production with HTTPS
             samesite='lax',
+            path='/',
             max_age=50000 * 60
         )
 

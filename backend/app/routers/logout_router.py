@@ -18,6 +18,7 @@ async def logout(response: Response):
         httponly=True,
         secure=False,         # Should be True in production (HTTPS)
         samesite='lax',
+        path='/',
         max_age=0             # Set max_age to 0 to expire the cookie immediately
     )
     

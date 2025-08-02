@@ -82,6 +82,7 @@ async def google_auth_callback(
             httponly=True,
             secure=False,
             samesite='lax',
+            path='/',# important to set the path to root so cookie is send with all requests
             max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
 
