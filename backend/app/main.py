@@ -11,6 +11,8 @@ from .graph.graph import get_graph
 
 # --- App Module Imports ---
 from app.core.log_config import setup_logging
+# CHANGE: Import the shared resources dictionary from the new dependencies file
+from .dependencies import shared_resources
 from .routers import lecture_transcript_router, google_login_router, logout_router, simpleChat_router, traditional_login_router
 from .database.session import create_tables
 
@@ -18,8 +20,7 @@ from .database.session import create_tables
 setup_logging()
 logger = logging.getLogger(__name__)
 
-# This dictionary will hold our long-lived, shared resources
-shared_resources = {}
+# The shared_resources dictionary has been moved to app/dependencies.py
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,7 +37,7 @@ async def lifespan(app: FastAPI):
     async with checkpointer as db_checkpoint:
         
         # 3. Build the graph once using the checkpointer
-        #    and store it in the shared dictionary
+        #    and store it in the shared dictionary from the dependencies module
         shared_resources["graph"] = get_graph(db_checkpoint)
         logger.info("LangGraph agent has been built and is ready.")
         
@@ -65,10 +66,7 @@ app.include_router(logout_router.router)
 app.include_router(simpleChat_router.router)
 app.include_router(traditional_login_router.router)
 
-# --- Dependency for Routers ---
-def get_app_graph():
-    """A simple dependency function to provide the shared graph instance to routers."""
-    return shared_resources["graph"]
+# CHANGE: The dependency function has been moved to app/dependencies.py
 
 @app.get("/")
 def read_root():

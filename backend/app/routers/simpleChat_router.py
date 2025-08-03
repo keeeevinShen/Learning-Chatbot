@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage
 
 # --- Updated Imports ---
-from ..main import get_app_graph  # Import the dependency function
+from ..dependencies import get_app_graph  # Import the dependency function
 from .auth_dependencies import *
 
 logger = logging.getLogger(__name__)
