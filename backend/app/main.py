@@ -3,33 +3,53 @@
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-
-from app.core.log_config import setup_logging
-setup_logging()
-
 from fastapi.middleware.cors import CORSMiddleware
+
+# --- LangGraph Imports ---
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+from .graph.graph import get_graph
+
+# --- App Module Imports ---
+from app.core.log_config import setup_logging
 from .routers import lecture_transcript_router, google_login_router, logout_router, simpleChat_router, traditional_login_router
 from .database.session import create_tables
 
-# Configure logging once, right when the app starts.
-logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+# Run setup functions
+setup_logging()
+logger = logging.getLogger(__name__)
+
+# This dictionary will hold our long-lived, shared resources
+shared_resources = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Create database tables
+    # --- Code here runs ONCE on startup ---
+    logger.info("Application starting up...")
+    
+    # 1. Create database tables if they don't exist
     await create_tables()
-    logging.info("Database tables created")
-    yield
-    # Shutdown: Clean up resources if needed
-    logging.info("Application shutdown")
+    logger.info("Database tables verified.")
 
-# Create the FastAPI app instance
+    # 2. Set up the checkpointer's database connection
+    #    The 'async with' handles connection opening and closing
+    checkpointer = AsyncSqliteSaver.from_conn_string("checkpoints.sqlite")
+    async with checkpointer as db_checkpoint:
+        
+        # 3. Build the graph once using the checkpointer
+        #    and store it in the shared dictionary
+        shared_resources["graph"] = get_graph(db_checkpoint)
+        logger.info("LangGraph agent has been built and is ready.")
+        
+        yield # The app is now running and accepting requests
+
+    # --- Code here runs ONCE on shutdown ---
+    logger.info("Application shutting down...")
+    # The 'async with' block ensures the checkpointer connection is closed gracefully
+
+# Create the FastAPI app instance with our lifespan manager
 app = FastAPI(lifespan=lifespan)
 
-# Add CORS middleware to allow frontend requests
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5174", "http://localhost:5173", "http://127.0.0.1:5174", "http://127.0.0.1:5173"],
@@ -38,15 +58,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+# Include your API routers
 app.include_router(lecture_transcript_router.router)
 app.include_router(google_login_router.router)
 app.include_router(logout_router.router)
 app.include_router(simpleChat_router.router)
 app.include_router(traditional_login_router.router)
 
+# --- Dependency for Routers ---
+def get_app_graph():
+    """A simple dependency function to provide the shared graph instance to routers."""
+    return shared_resources["graph"]
+
 @app.get("/")
 def read_root():
     """A simple endpoint to check if the API is running."""
-    logging.info("Root endpoint was hit.")
+    logger.info("Root endpoint was hit.")
     return {"status": "API is running"}

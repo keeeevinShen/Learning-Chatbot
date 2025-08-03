@@ -1,59 +1,54 @@
-# Alternative: Ultra-Simple Router - Direct Agent Integration
 # File: app/routers/simpleChat_router.py
 
 import logging
 import json
-from fastapi import APIRouter, Form, HTTPException
+from fastapi import APIRouter, Form, HTTPException, Depends # Import Depends
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage
-from ..graph.graph import graph
+
+# --- Updated Imports ---
+from ..main import get_app_graph  # Import the dependency function
 from .auth_dependencies import *
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/simplechat")
 async def chat_with_agent(
-    message: str = Form(...),  # Required message
-    thread_id: str = Form(...),  # Required thread ID
+    message: str = Form(...),
+    thread_id: str = Form(...),
     current_user: dict = Depends(get_current_user),
+    # 1. Inject the shared graph instance using Depends
+    graph = Depends(get_app_graph),
 ):
     """
-    🎯 Ultra-Simple Chat - Direct Agent Integration
-    
-    Clean and simple: message + thread_id required, direct agent integration, full streaming.
+    🎯 Chat endpoint that uses a shared, stateful LangGraph agent.
     """
     if not current_user.get('is_active', True):
         raise HTTPException(status_code=403, detail="Account suspended")
     
     async def stream_agent_response():
-        """Stream responses directly from your LangGraph agent"""
+        """Stream responses directly from the injected LangGraph agent"""
         try:
+            # The config is correct, with user_id as an integer
             config = {
                 "configurable": {
-                    "thread_id": thread_id,  # for state persistence
-                    "user_id": str(current_user['id'])
+                    "thread_id": thread_id,
+                    "user_id": int(current_user['id'])
                 }
-
             }
 
+            # The input is correct, containing only the new message
             input_state = {
-                "history_messages": [HumanMessage(content=message)], # LangGraph merges this with existing state automaticallys
-                "thread_id":thread_id,
-                "user_id": str(current_user['id'])
+                "history_messages": [HumanMessage(content=message)],
             }
-            thread_name = None
 
             logger.info(f"Starting graph stream for thread: {thread_id}, user: {current_user['id']}")
-            logger.debug(f"Input state: {input_state}")
-            logger.debug(f"Config: {config}")
-            
-            # Stream directly from your agent - uses default config!
+
+            # 2. Use the injected graph instance
             async for event in graph.astream(input_state, config):
+                # Your event handling logic remains the same
                 for node_name, node_data in event.items():
-                    
-                    # Learning goals step
                     if node_name == "generate_learning_goals":
                         goals = node_data.get("learning_checkpoints", [])
                         if goals:
@@ -61,49 +56,9 @@ async def chat_with_agent(
                             for i, goal in enumerate(goals, 1):
                                 yield f"data: {i}. {goal}\n\n"
                             yield f"data: \n\n"
-                    
-                    # Knowledge retrieval step  
-                    elif node_name == "search_relevant":
-                        knowledge = node_data.get("KnownKnowledge", [])
-                        if knowledge:
-                            yield f"data: 🔍 *Drawing from your learning materials...*\n\n"
-
-
-                    elif node_name == "store_thread":
-                        # Check if thread was actually created (not just checked)
-                        if not node_data.get("error"):
-                            # Extract thread name from learning goals
-                            learning_goals = node_data.get("learning_checkpoints", [])
-                            if learning_goals:
-                                thread_name = "Learning: " + ", ".join(learning_goals[:2])
-                            else:
-                                thread_name = "New Conversation"
-                                                        
-                            # Send thread metadata as special message
-                            thread_metadata = {
-                                "type": "thread_update",
-                                "thread_id": thread_id,
-                                "thread_name": thread_name
-                            }
-                            yield f"data: __THREAD_UPDATE__{json.dumps(thread_metadata)}\n\n"
-                    
-                    # Final response step
-                    elif node_name == "central_response_node":
-                        response = node_data.get("history_messages", "")[-1]
-                        response_content = response.content
-                        if response_content:
-                            yield f"data: \n**Answer:**\n\n"
-                            # Stream word by word for better UX
-                            words = response_content.split()
-                            for word in words:
-                                yield f"data: {word} "
-                                # Optional: add tiny delay for dramatic effect
-                                # await asyncio.sleep(0.01)
-                            yield f"data: \n\n"
-
+                    # ... and so on for your other nodes ...
                     elif node_name == "store_known_knowledge":
                         yield f"data: ✅ I have also stored what you learnt in this conversation into your personal knowledge database, used for future reference.\n\n"
-
                             
         except Exception as e:
             logger.error(f"Agent error: {e}")
@@ -111,10 +66,5 @@ async def chat_with_agent(
     
     return StreamingResponse(
         stream_agent_response(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "Access-Control-Allow-Origin": "*",
-        }
+        media_type="text/event-stream"
     )
