@@ -39,7 +39,7 @@ class SearchQuery(BaseModel):
 
 
 class checkpoints(BaseModel):
-    goals: List[str] = Field(description="concepts we trying to learn")
+    goals: List[str] = Field(description="the steps we need to take to learn a certain lecture or concepts, this should contains at least 3 checkpoints")
 
 
 class LearningResponse(BaseModel):

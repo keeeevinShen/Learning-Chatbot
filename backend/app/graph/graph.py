@@ -52,7 +52,6 @@ if not os.getenv("GEMINI_API_KEY"):
 
 genai_client = Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-collection = chroma_manager.get_collection()
 
 
 
@@ -105,7 +104,12 @@ async def generate_query(state: AgentState, config: RunnableConfig):
 
 
 #using the qeury to perform RAG search too find the known knowledge
-async def search_relevant(state: AgentState):
+async def search_relevant(state: AgentState, config: RunnableConfig):
+    configurable = Configuration.from_runnable_config(config)
+    user_id = configurable.user_id
+    collection_name = f"user_{user_id}_knowledge"
+    collection = chroma_manager.get_collection(name=collection_name)
+
     search_queries = state.get('search_query', [])
     vectorized_queries = await asyncio.to_thread(
         chroma_manager.embedding_model.embed_documents, search_queries
@@ -116,6 +120,9 @@ async def search_relevant(state: AgentState):
         query_embeddings=vectorized_queries,
         n_results=5
     )
+    documents = results.get('documents')
+    if not documents:
+        return {"KnownKnowledge": []}
     
     retrieved_docs = [doc for doc_list in results['documents'] for doc in doc_list]
 
@@ -124,7 +131,10 @@ async def search_relevant(state: AgentState):
 
 
 #final step to store the knowledge to the RAG system  ,   this will only be called when LLM think we finish our learning, and call this node. 
-async def store_known_knowledge(state: AgentState):
+async def store_known_knowledge(state: AgentState, config: RunnableConfig):
+    configurable = Configuration.from_runnable_config(config)
+    user_id = configurable.user_id
+
     learning_checkpoints = state.get("learning_checkpoints", [])
     
     if not learning_checkpoints:
@@ -136,7 +146,9 @@ async def store_known_knowledge(state: AgentState):
     try: 
         combined_content = "\n\n".join(content_list)
 
-        collection = chroma_manager.get_collection("learning_materials")
+        collection_name = f"user_{user_id}_knowledge"
+        collection = chroma_manager.get_collection(name=collection_name)
+
         embeddings = await asyncio.to_thread(
             chroma_manager.embedding_model.embed_documents, [combined_content]
         )
@@ -149,10 +161,10 @@ async def store_known_knowledge(state: AgentState):
             metadatas=[{"topic": topic}]
         )
         
-        logger.info(f"Successfully stored knowledge for topic: {topic}")
+        logger.info(f"Successfully stored knowledge for user {user_id} in topic: {topic}")
 
     except Exception as e: 
-            logger.error(f"Failed to store knowledge for topic '{topic}': {str(e)}")
+        logger.error(f"Failed to store knowledge for user {user_id}, topic '{topic}': {str(e)}")
 
         
     return {}

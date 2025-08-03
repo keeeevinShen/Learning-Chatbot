@@ -56,10 +56,34 @@ async def chat_with_agent(
                             for i, goal in enumerate(goals, 1):
                                 yield f"data: {i}. {goal}\n\n"
                             yield f"data: \n\n"
-                    # ... and so on for your other nodes ...
+
+                    elif node_name == "central_response_node":
+                        # This is the main conversational response
+                        history_messages = node_data.get("history_messages", [])
+                        error = node_data.get("error")
+                        
+                        if error:
+                            yield f"data: ❌ **Error:** {error}\n\n"
+                        elif history_messages:
+                            # Get the latest AI message (the response)
+                            latest_message = history_messages[-1]
+                            if hasattr(latest_message, 'content'):
+                                response_text = latest_message.content
+                                yield f"data: 🎓 **Your Learning Guide:**\n\n"
+                                yield f"data: {response_text}\n\n"
+                        
+                        # Check if learning is complete
+                        learning_complete = node_data.get("learning_complete", False)
+                        if learning_complete:
+                            yield f"data: \n\n🎉 **Congratulations!** You've mastered all the learning checkpoints!\n\n"
+                    
+
                     elif node_name == "store_known_knowledge":
                         yield f"data: ✅ I have also stored what you learnt in this conversation into your personal knowledge database, used for future reference.\n\n"
-                            
+                    
+                    elif "error" in node_data:
+                        error_msg = node_data.get("error", "Unknown error occurred")
+                        yield f"data: ⚠️ **Node Error in {node_name}:** {error_msg}\n\n"
         except Exception as e:
             logger.error(f"Agent error: {e}")
             yield f"data: ❌ I'm having trouble right now. Please try again in a moment.\n\n"

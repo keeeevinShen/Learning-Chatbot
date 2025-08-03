@@ -9,6 +9,7 @@ from .schemas import *
 
 
 class AgentState(TypedDict):
+
     # Core conversation data
     history_messages: Annotated[list[AnyMessage], add_messages]
 

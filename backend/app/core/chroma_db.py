@@ -11,7 +11,6 @@ load_dotenv(find_dotenv())
 
 # Database-specific constants
 CHROMA_DB_PATH = Path("./chroma_db")
-DEFAULT_COLLECTION_NAME = "learning_materials"
 
 class ChromaDBManager:
     _instance: Optional['ChromaDBManager'] = None
@@ -60,7 +59,7 @@ class ChromaDBManager:
     def embedding_model(self) -> GoogleGenerativeAIEmbeddings:
         return self._embedding_model
     
-    def get_collection(self, name: str = DEFAULT_COLLECTION_NAME):
+    def get_collection(self, name: str ):
         return self._client.get_or_create_collection(name=name)
 
 # Singleton instance
