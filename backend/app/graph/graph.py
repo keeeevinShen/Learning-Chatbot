@@ -99,7 +99,13 @@ async def generate_query(state: AgentState, config: RunnableConfig):
     
     # Generate the search queries
     result = await structured_llm.ainvoke(formatted_prompt)
-    return {"search_query": result.query}
+
+
+    if result and hasattr(result, 'query') and result.query:
+        return {"search_query": result.query}
+    else:
+        logger.warning("Query generation failed, proceeding with an empty query list.")
+        return {"search_query": []}
 
 
 
@@ -265,6 +271,18 @@ async def name_and_store_thread(state: AgentState, config: RunnableConfig):
     return {}
     
 
+def decide_entry_point(state: AgentState) -> str:
+    """
+    Checks if learning goals have been set. If not, it routes to the goal generation node.
+    Otherwise, it proceeds to the main conversational response node.
+    """
+    if not state.get("learning_checkpoints"):
+        # No learning goals yet, so we need to generate them.
+        return "generate_learning_goals"
+    else:
+        # Learning goals exist, so we can skip to the main chat logic.
+        return "central_response_node"
+    
 # Create our Agent Graph
 def get_graph(checkpointer):
     """Builds and compiles the LangGraph agent."""
@@ -279,13 +297,23 @@ def get_graph(checkpointer):
     builder.add_node("store_thread", name_and_store_thread)
 
     # Add edges
-    builder.set_entry_point("generate_learning_goals")
     builder.add_edge("store_known_knowledge", "__end__")
     builder.add_edge("generate_learning_goals", "store_thread")
     builder.add_edge("store_thread", "generate_query")
     builder.add_edge("generate_query", "search_relevant")
     builder.add_edge("search_relevant", "central_response_node")
 
+
+    builder.add_conditional_edges(
+            "__start__",  # A special name for the graph's starting point
+            decide_entry_point,
+            {
+                "generate_learning_goals": "generate_learning_goals",
+                "central_response_node": "central_response_node"
+            }
+        )
+    
+    builder.set_entry_point("__start__")
     # Add conditional edges
     builder.add_conditional_edges(
         "central_response_node",

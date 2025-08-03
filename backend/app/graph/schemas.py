@@ -34,7 +34,7 @@ class ChatResponse(BaseModel):
 
 class SearchQuery(BaseModel):
     query: List[str] = Field(
-        description="A list of search queries to be used for web research."
+        description="A list of queries for searching revelant user known knowledge, since later we need this known knowledge to explain new concepts"
     )
 
 

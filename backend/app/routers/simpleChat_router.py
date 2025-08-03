@@ -47,8 +47,11 @@ async def chat_with_agent(
 
             # 2. Use the injected graph instance
             async for event in graph.astream(input_state, config):
-                # Your event handling logic remains the same
+                if event is None:
+                    continue
                 for node_name, node_data in event.items():
+                    if node_data is None:
+                        continue
                     if node_name == "generate_learning_goals":
                         goals = node_data.get("learning_checkpoints", [])
                         if goals:
