@@ -34,22 +34,7 @@ const LoginPage = () => {
     setIsLoading(false);
   };
 
-  const handleDemoLogin = async () => {
-    setEmail('demo@example.com');
-    setPassword('demo123');
-    setError('');
-    setIsLoading(true);
-    
-    const result = await login('demo@example.com', 'demo123');
-    
-    if (result.success) {
-      navigate('/');
-    } else {
-      setError(result.error || 'Login failed');
-    }
-    
-    setIsLoading(false);
-  };
+
 
   const handleGoogleLogin = () => {
     // Get Google Client ID from environment variables
@@ -190,16 +175,7 @@ const LoginPage = () => {
             </button>
           </form>
 
-          {/* Demo Login */}
-          <div className="mt-4 pt-4 border-t border-gray-700">
-            <button
-              onClick={handleDemoLogin}
-              disabled={isLoading}
-              className="w-full text-center text-purple-400 hover:text-purple-300 text-sm transition-colors"
-            >
-              Use Demo Account (demo@example.com)
-            </button>
-          </div>
+
         </div>
 
         {/* Footer */}

@@ -31,9 +31,14 @@ const ChatPage = () => {
         }));
         setChats(chatsFromThreads);
       } else {
-        // Fallback to fetchChats if no threads from login
-        const initialChats = await fetchChats();
-        setChats(initialChats);
+        // Start with a single new chat instead of empty or mock data
+        const newChat = {
+          id: Date.now().toString(),
+          title: 'New Chat',
+          messages: []
+        };
+        setChats([newChat]);
+        setActiveChat(newChat);
       }
     };
     loadChats();
@@ -88,6 +93,7 @@ const ChatPage = () => {
 
   const handleChatSelect = (chat) => {
     setActiveChat(chat);
+    setIsLoading(false);
     // TODO: Load messages for this thread from backend if needed
     // You might want to call an API to fetch messages for this thread_id
   };

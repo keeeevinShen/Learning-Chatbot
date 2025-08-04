@@ -4,13 +4,8 @@
 
 // Additional service functions for managing chats
 export const fetchChats = async () => {
-  // This would fetch all chats from the backend
-  // For now, return mock data
-  return [
-    { id: 1, title: 'How to use React hooks', messages: [] },
-    { id: 2, title: 'Explain quantum computing', messages: [] },
-    { id: 3, title: 'Best practices for API design', messages: [] }
-  ];
+  // Return empty array instead of mock data
+  return [];
 };
 
 export const importLecture = async (lectureUrl) => {
