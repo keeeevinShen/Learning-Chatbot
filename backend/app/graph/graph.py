@@ -313,7 +313,6 @@ def get_graph(checkpointer):
             }
         )
     
-    builder.set_entry_point("__start__")
     # Add conditional edges
     builder.add_conditional_edges(
         "central_response_node",
