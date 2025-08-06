@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Book, MessageSquare, User, X, Menu, UploadCloud, LogIn } from 'lucide-react';
+import { Plus, Search, Book, MessageSquare, User, X, Menu, UploadCloud, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({
@@ -10,6 +10,7 @@ const Sidebar = ({
   chats,
   activeChat,
   searchQuery,
+  isLoadingThreads,
   onSearchChange,
   onChatSelect,
   onNewChat,
@@ -67,31 +68,54 @@ const Sidebar = ({
 
           {/* Chat History */}
           <div className="flex-1 overflow-y-auto px-4 py-2">
-            <div className="space-y-1">
-              {filteredChats.map(chat => (
-                <div key={chat.id} className="relative group">
-                  <button
-                    onClick={() => onChatSelect(chat)}
-                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors pr-10 ${
-                      activeChat?.id === chat.id
-                        ? 'bg-gray-800 text-gray-100'
-                        : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800'
-                    }`}
-                  >
-                    <div className="truncate">{chat.title}</div>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteChat(chat.id);
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-100 hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
+            {/* Loading indicator */}
+            {isLoadingThreads && (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
+                <span className="ml-2 text-sm text-gray-400">Loading threads...</span>
+              </div>
+            )}
+            
+            {/* Chat list */}
+            {!isLoadingThreads && (
+              <div className="space-y-1">
+                {filteredChats.length === 0 && isAuthenticated && (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-gray-400">No recent conversations</p>
+                    <p className="text-xs text-gray-500 mt-1">Start a new chat to begin</p>
+                  </div>
+                )}
+                
+                {filteredChats.map(chat => (
+                  <div key={chat.id} className="relative group">
+                    <button
+                      onClick={() => onChatSelect(chat)}
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors pr-10 ${
+                        activeChat?.id === chat.id
+                          ? 'bg-gray-800 text-gray-100'
+                          : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800'
+                      }`}
+                    >
+                      <div className="truncate">{chat.title}</div>
+                      {chat.updated_at && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {new Date(chat.updated_at).toLocaleDateString()}
+                        </div>
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteChat(chat.id);
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-100 hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Footer */}

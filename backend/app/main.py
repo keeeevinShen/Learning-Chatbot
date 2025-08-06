@@ -13,7 +13,7 @@ from .graph.graph import get_graph
 from app.core.log_config import setup_logging
 # CHANGE: Import the shared resources dictionary from the new dependencies file
 from .dependencies import shared_resources
-from .routers import lecture_transcript_router, google_login_router, logout_router, simpleChat_router, traditional_login_router,get_thread_history_router
+from .routers import lecture_transcript_router, google_login_router, logout_router, simpleChat_router, traditional_login_router,get_thread_history_router,get_thread_router
 from .database.session import create_tables
 
 # Run setup functions
@@ -66,6 +66,8 @@ app.include_router(logout_router.router)
 app.include_router(simpleChat_router.router)
 app.include_router(traditional_login_router.router)
 app.include_router(get_thread_history_router.router)
+app.include_router(get_thread_router.router)
+
 
 # CHANGE: The dependency function has been moved to app/dependencies.py
 

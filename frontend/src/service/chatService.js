@@ -9,6 +9,32 @@ export const fetchChats = async () => {
   return [];
 };
 
+// New function to fetch recent threads from backend
+export const fetchRecentThreads = async () => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/api/threads`, {
+      method: 'GET',
+      credentials: 'include', // Include cookies for authentication
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const threads = await response.json();
+    console.log('✅ Fetched recent threads:', threads);
+    
+    return threads;
+  } catch (error) {
+    console.error("❌ Error fetching recent threads:", error);
+    // Return empty array on error to prevent breaking the UI
+    return [];
+  }
+};
+
 export const importLecture = async (lectureUrl) => {
   try {
     console.log('🚀 Making request to backend with URL:', lectureUrl);

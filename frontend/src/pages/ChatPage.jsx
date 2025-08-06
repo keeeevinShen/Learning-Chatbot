@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import ChatHeader from '../components/ChatHeader';
 import MessageList from '../components/MessageList';
 import MessageInput from '../components/MessageInput';
-import { fetchChats } from '../service/chatService';
+import { fetchChats, fetchRecentThreads } from '../service/chatService';
 import { useAuth } from '../context/AuthContext';
 
 const ChatPage = () => {
@@ -13,9 +13,10 @@ const ChatPage = () => {
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingThreads, setIsLoadingThreads] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const streamingBotMessageRef = useRef(null);
-  const { userThreads, loading: authLoading } = useAuth(); // Get the auth loading state
+  const { userThreads, loading: authLoading, isAuthenticated } = useAuth(); // Get the auth loading state
 
   // Initialize chats from userThreads or fetch them
   useEffect(() => {
@@ -38,6 +39,46 @@ const ChatPage = () => {
     };
     loadChats();
   }, [userThreads]);
+
+  // Function to fetch recent threads from backend
+  const loadRecentThreads = async () => {
+    if (!isAuthenticated) {
+      console.log('User not authenticated, skipping thread fetch');
+      return;
+    }
+
+    setIsLoadingThreads(true);
+    try {
+      const threads = await fetchRecentThreads();
+      
+      // Convert threads from backend to chat format
+      const chatsFromThreads = threads.map(thread => ({
+        id: thread.thread_id,  // Use thread_id as the chat id
+        title: thread.thread_name,
+        messages: [],  // Messages will be loaded when chat is selected
+        created_at: thread.created_at,
+        updated_at: thread.updated_at
+      }));
+      
+      setChats(chatsFromThreads);
+      console.log('✅ Updated chats with recent threads:', chatsFromThreads);
+    } catch (error) {
+      console.error('❌ Failed to load recent threads:', error);
+    } finally {
+      setIsLoadingThreads(false);
+    }
+  };
+
+  // Modified sidebar toggle handler
+  const handleToggleSidebar = async () => {
+    const willBeOpen = !isSidebarOpen;
+    setIsSidebarOpen(willBeOpen);
+    
+    // If opening the sidebar and user is authenticated, fetch recent threads
+    if (willBeOpen && isAuthenticated) {
+      await loadRecentThreads();
+    }
+  };
 
   const createNewChat = () => {
     const newChat = {
@@ -237,11 +278,12 @@ const ChatPage = () => {
         chats={chats}
         activeChat={activeChat}
         searchQuery={searchQuery}
+        isLoadingThreads={isLoadingThreads}
         onSearchChange={setSearchQuery}
         onChatSelect={handleChatSelect}
         onNewChat={createNewChat}
         onDeleteChat={handleDeleteChat}
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        onToggleSidebar={handleToggleSidebar}
       />
 
       <div className="flex-1 flex flex-col">
