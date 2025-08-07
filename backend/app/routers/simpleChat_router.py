@@ -54,10 +54,10 @@ async def chat_with_agent(
                     if node_name == "generate_learning_goals":
                         goals = node_data.get("learning_checkpoints", [])
                         if goals:
-                            yield "data: 📚 **Learning Plan:**\n\n"
+                            logger.info("## 📚 Learning Plan")
                             for i, goal in enumerate(goals, 1):
-                                yield f"data: {i}. {goal}\n\n"
-                            yield "data: \n\n"
+                                logger.info(f"**{i}.** {goal}")
+                            logger.info("---")
 
                     elif node_name == "central_response_node":
                         error = node_data.get("error")
@@ -67,7 +67,6 @@ async def chat_with_agent(
                             latest_message = node_data.get("history_messages", [])[-1]
                             if isinstance(latest_message, AIMessage):
                                 response_text = latest_message.content
-                                yield "data:    \n\n"
                                 yield f"data: {response_text}\n\n"
 
                         if node_data.get("learning_complete", False):
