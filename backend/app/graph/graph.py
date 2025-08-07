@@ -256,7 +256,7 @@ async def name_and_store_thread(state: AgentState, config: RunnableConfig):
             
             # Generate a name from the first two goals, or use a default.
             if learning_goals:
-                thread_name = "Learning: " + ", ".join(learning_goals[:1])
+                thread_name =  ", ".join(learning_goals[:1])
             else:
                 thread_name = "New Conversation"
             
