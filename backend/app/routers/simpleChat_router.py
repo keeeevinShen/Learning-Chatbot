@@ -66,11 +66,18 @@ async def chat_with_agent(
                         else:
                             latest_message = node_data.get("history_messages", [])[-1]
                             if isinstance(latest_message, AIMessage):
-                                response_text = latest_message.content
-                                yield f"data: {response_text}\n\n"
+                                response_text = latest_message.content or ""
+                                # SSE requires each line of data to be prefixed with 'data:'
+                                for line in response_text.splitlines():
+                                    yield f"data: {line}\n"
+                                # End of one SSE message event
+                                yield "\n"
 
                         if node_data.get("learning_complete", False):
-                            yield "data: \n\n🎉 **Congratulations!** You've mastered all the learning checkpoints!\n\n"
+                            congrats_text = "🎉 **Congratulations!** You've mastered all the learning checkpoints!"
+                            for line in congrats_text.splitlines():
+                                yield f"data: {line}\n"
+                            yield "\n"
                     
                     elif node_name == "store_known_knowledge":
                         yield "data: ✅ I have also stored what you learnt in this conversation into your personal knowledge database, used for future reference.\n\n"

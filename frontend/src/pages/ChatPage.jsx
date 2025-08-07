@@ -292,8 +292,8 @@ const ChatPage = () => {
               continue; // Move to the next line
             }
   
-            // Add regular message content
-            accumulatedContent += data;
+            // Add regular message content and preserve line breaks
+            accumulatedContent += data + '\n';
             
             // Update the bot's message content in real-time
             const updatedMessages = currentActiveChat.messages.map(msg =>
