@@ -56,23 +56,29 @@ genai_client = Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 
 async def generate_learning_goals(state: AgentState, config: RunnableConfig):
+    """
+    If learning goals don't exist, generates them. 
+    If they already exist, this node does nothing and just passes through.
+    """
+    # This is the new, critical gatekeeping logic
+    if state.get("learning_checkpoints"):
+        logger.info("Learning checkpoints already exist. Skipping generation.")
+        return {} # Do nothing and let the graph continue to the next node.
 
+    # --- If checkpoints DON'T exist, run the original logic ---
+    logger.info("Generating new learning checkpoints.")
     configurable = Configuration.from_runnable_config(config)
 
-    # init Gemini 2.0 Flash
     llm = ChatGoogleGenerativeAI(
         model=configurable.query_generator_model,
         temperature=1.0,
         max_retries=2,
         api_key=os.getenv("GEMINI_API_KEY"),
     )
-
     structured_llm = llm.with_structured_output(checkpoints)
-
     prompt = state.get('history_messages', []) + [
         HumanMessage(content="Based on our conversation, what checkpoints should we establish to achieve the learning goal?")
     ]
-
     result = await structured_llm.ainvoke(prompt)
     return {"learning_checkpoints": result.goals}
 
@@ -250,7 +256,7 @@ async def name_and_store_thread(state: AgentState, config: RunnableConfig):
             
             # Generate a name from the first two goals, or use a default.
             if learning_goals:
-                thread_name = "Learning: " + ", ".join(learning_goals[:2])
+                thread_name = "Learning: " + ", ".join(learning_goals[:1])
             else:
                 thread_name = "New Conversation"
             
@@ -273,59 +279,65 @@ async def name_and_store_thread(state: AgentState, config: RunnableConfig):
 
 def decide_entry_point(state: AgentState) -> str:
     """
-    Checks if learning goals have been set. If not, it routes to the goal generation node.
-    Otherwise, it proceeds to the main conversational response node.
+    Checks if learning goals have been set. If not, it routes to the goal
+    generation node. Otherwise, it proceeds to the main conversational response node.
     """
-    if not state.get("learning_checkpoints"):
-        # No learning goals yet, so we need to generate them.
-        return "generate_learning_goals"
-    else:
-        # Learning goals exist, so we can skip to the main chat logic.
+    if state.get("learning_checkpoints"):
+        # Goals exist, it's an ongoing chat, go to the central node
         return "central_response_node"
-    
-# Create our Agent Graph
+    else:
+        # No goals yet, it's a new chat, start the setup process
+        return "generate_learning_goals"
+
+
 def get_graph(checkpointer):
-    """Builds and compiles the LangGraph agent."""
+    """Builds and compiles a robust agent pipeline with an explicit end state."""
     builder = StateGraph(AgentState, config_schema=Configuration)
 
-    # Add nodes
+    # 1. Add all nodes as before
     builder.add_node("generate_learning_goals", generate_learning_goals)
+    builder.add_node("store_thread", name_and_store_thread)
     builder.add_node("generate_query", generate_query)
     builder.add_node("search_relevant", search_relevant)
-    builder.add_node("store_known_knowledge", store_known_knowledge)
     builder.add_node("central_response_node", central_response_node)
-    builder.add_node("store_thread", name_and_store_thread)
+    builder.add_node("store_known_knowledge", store_known_knowledge)
 
-    # Add edges
-    builder.add_edge("store_known_knowledge", "__end__")
+    # --- THE FIX: Add an explicit end node ---
+    # This node does nothing and just marks a clean exit point.
+    builder.add_node("end_node", lambda state: {})
+
+    # 2. Set the conditional entry point as before
+    builder.set_conditional_entry_point(
+        decide_entry_point,
+        {
+            "generate_learning_goals": "generate_learning_goals",
+            "central_response_node": "central_response_node",
+        }
+    )
+
+    # 3. Define the initial setup path as before
     builder.add_edge("generate_learning_goals", "store_thread")
     builder.add_edge("store_thread", "generate_query")
     builder.add_edge("generate_query", "search_relevant")
     builder.add_edge("search_relevant", "central_response_node")
 
-
-    builder.add_conditional_edges(
-            "__start__",  # A special name for the graph's starting point
-            decide_entry_point,
-            {
-                "generate_learning_goals": "generate_learning_goals",
-                "central_response_node": "central_response_node"
-            }
-        )
-    
-    # Add conditional edges
+    # 4. Modify the conditional branch to use the new end node
     builder.add_conditional_edges(
         "central_response_node",
         should_continue,
         {
             "continue_to_store_known_knowledge": "store_known_knowledge",
-            "wait_for_next_human_input": "__end__",
-        },
+            # Instead of mapping to __end__, map to our clean end_node
+            "wait_for_next_human_input": "end_node",
+        }
     )
 
-    # Compile the graph with the provided checkpointer
-    return builder.compile(checkpointer=checkpointer)
+    # 5. Define the final edges leading to the true end
+    builder.add_edge("store_known_knowledge", "end_node")
+    builder.add_edge("end_node", "__end__") # Only the end_node connects to __end__
 
+    # 6. Compile the graph
+    return builder.compile(checkpointer=checkpointer)
 
 
 
