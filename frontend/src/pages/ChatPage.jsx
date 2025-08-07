@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import ChatHeader from '../components/ChatHeader';
 import MessageList from '../components/MessageList';
 import MessageInput from '../components/MessageInput';
-import { fetchChats, fetchRecentThreads } from '../service/chatService';
+import { fetchChats, fetchRecentThreads, fetchThreadHistory } from '../service/chatService';
 import { useAuth } from '../context/AuthContext';
 
 const ChatPage = () => {
@@ -14,9 +14,49 @@ const ChatPage = () => {
   const [activeChat, setActiveChat] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingThreads, setIsLoadingThreads] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const streamingBotMessageRef = useRef(null);
   const { userThreads, loading: authLoading, isAuthenticated } = useAuth(); // Get the auth loading state
+
+  // Helper function to transform backend messages to frontend format
+  const transformMessage = (message, index) => {
+    // Handle different message formats from the backend
+    if (typeof message === 'string') {
+      // Simple string message - treat as bot message
+      return {
+        id: `msg-${Date.now()}-${index}`,
+        type: 'bot',
+        content: message,
+        isStreaming: false
+      };
+    }
+    
+    // Handle LangGraph message format
+    if (message.type === 'human' || message.type === 'user') {
+      return {
+        id: message.id || `msg-${Date.now()}-${index}`,
+        type: 'user',
+        content: message.content || message.text || '',
+        attachments: message.attachments || []
+      };
+    } else if (message.type === 'ai' || message.type === 'assistant' || message.type === 'bot') {
+      return {
+        id: message.id || `msg-${Date.now()}-${index}`,
+        type: 'bot',
+        content: message.content || message.text || '',
+        isStreaming: false
+      };
+    }
+    
+    // Fallback: try to detect based on content or default to bot
+    return {
+      id: message.id || `msg-${Date.now()}-${index}`,
+      type: message.type || 'bot',
+      content: message.content || message.text || message.toString(),
+      isStreaming: false
+    };
+  };
 
   // Initialize chats from userThreads or fetch them
   useEffect(() => {
@@ -127,10 +167,44 @@ const ChatPage = () => {
     await handleStreamingMessage(inputValue, files, currentChat, updatedChat, feynmanMode);
   };
 
-  const handleChatSelect = (chat) => {
-    setActiveChat(chat);
-    // TODO: Load messages for this thread from backend if needed
-    // You might want to call an API to fetch messages for this thread_id
+  const handleChatSelect = async (chat) => {
+    // Don't reload if it's already the active chat and it has messages
+    if (activeChat && activeChat.id === chat.id && activeChat.messages && activeChat.messages.length > 0) {
+      return;
+    }
+
+    setIsLoadingMessages(true);
+    setActiveChat({ ...chat, messages: [] }); // Set active chat immediately with empty messages
+    
+    try {
+      // Fetch thread history from backend
+      const messages = await fetchThreadHistory(chat.id);
+      console.log('📨 Raw messages from backend:', messages);
+      
+      // Transform messages to frontend format
+      const transformedMessages = messages.map((message, index) => transformMessage(message, index));
+      console.log('✨ Transformed messages:', transformedMessages);
+      
+      // Update the active chat with loaded messages
+      const updatedChat = {
+        ...chat,
+        messages: transformedMessages
+      };
+      
+      setActiveChat(updatedChat);
+      
+      // Also update the chat in the chats list
+      setChats(prevChats =>
+        prevChats.map(c => c.id === chat.id ? updatedChat : c)
+      );
+      
+    } catch (error) {
+      console.error('❌ Error loading thread history:', error);
+      // On error, still set the chat as active but with empty messages
+      setActiveChat({ ...chat, messages: [] });
+    } finally {
+      setIsLoadingMessages(false);
+    }
   };
 
   const handleDeleteChat = (chatId) => {
@@ -293,7 +367,7 @@ const ChatPage = () => {
 
         <MessageList
           messages={activeChat?.messages || []}
-          isLoading={isLoading}
+          isLoading={isLoading || isLoadingMessages} // Combine both loading states
           isEmpty={!activeChat || activeChat.messages.length === 0}
         />
 

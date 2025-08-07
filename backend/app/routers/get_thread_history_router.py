@@ -19,7 +19,7 @@ async def get_thread_history(thread_id: str, graph = Depends(get_app_graph)):
         state_snapshot = await graph.aget_state(config) # Use aget_state for async
 
         # Extract the messages from the state
-        history_messages = state_snapshot.values.get("messages", [])
+        history_messages = state_snapshot.values.get("history_messages", [])
 
         # Return the history to the frontend
         return {"messages": history_messages}

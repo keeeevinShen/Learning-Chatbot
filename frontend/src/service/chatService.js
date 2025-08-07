@@ -35,6 +35,35 @@ export const fetchRecentThreads = async () => {
   }
 };
 
+// New function to fetch thread history from backend
+export const fetchThreadHistory = async (threadId) => {
+  try {
+    console.log('🔍 Fetching thread history for:', threadId);
+    
+    const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/thread_history/${threadId}`, {
+      method: 'GET',
+      credentials: 'include', // Include cookies for authentication
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Fetched thread history:', data);
+    
+    // Return the messages array from the response
+    return data.messages || [];
+  } catch (error) {
+    console.error("❌ Error fetching thread history:", error);
+    // Return empty array on error to prevent breaking the UI
+    return [];
+  }
+};
+
 export const importLecture = async (lectureUrl) => {
   try {
     console.log('🚀 Making request to backend with URL:', lectureUrl);
