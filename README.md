@@ -13,7 +13,7 @@ A full-stack AI-powered web app that helps students quickly learn new material a
 4. 📄 **Automated Transcript Integration** – Fetches lecture transcripts from the University of Michigan for focused study sessions.
 5. 🧠 Actively embed the knowledge we have for future reference.
 
----
+
 
  
 
@@ -25,22 +25,7 @@ A full-stack AI-powered web app that helps students quickly learn new material a
 **Database:** PostgreSQL, ChromaDB, SQLite checkpointer  
 **Infrastructure:** Docker, AWS
 
----
 
-## Getting Started (Optional)
-> If you want to run locally instead of using the live app.
+## Agent workflow
 
-```bash
-# Clone repo
-
-cd learning-chatbot
-
-# Backend setup
-cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-
-# Frontend setup
-cd ../frontend
-npm install
-npm run dev
+![Agent workflow](agent_workflow.png)
