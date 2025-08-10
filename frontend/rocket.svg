@@ -1,30 +1,43 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg width="800px" height="800px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-<title>rocket</title>
-<g id="rocket">
-<circle cx="34" cy="28" r="23" style="fill:#edebdc"/>
-<line x1="51" y1="9" x2="51" y2="11" style="fill:none;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<line x1="51" y1="15" x2="51" y2="17" style="fill:none;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<line x1="47" y1="13" x2="49" y2="13" style="fill:none;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<line x1="53" y1="13" x2="55" y2="13" style="fill:none;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<circle cx="57.251" cy="28.232" r="1.069" style="fill:#4c241d"/>
-<circle cx="19.251" cy="13.232" r="1.069" style="fill:#4c241d"/>
-<circle cx="10.251" cy="24.232" r="1.069" style="fill:#4c241d"/>
-<circle cx="5.251" cy="43.232" r="1.069" style="fill:#4c241d"/>
-<circle cx="22.251" cy="29.232" r="1.069" style="fill:#4c241d"/>
-<circle cx="45.251" cy="23.232" r="1.069" style="fill:#4c241d"/>
-<circle cx="52.251" cy="47.232" r="1.069" style="fill:#4c241d"/>
-<circle cx="10.251" cy="10.232" r="1.069" style="fill:#4c241d"/>
-<polygon points="36 47 28 47 28 11 32 4 36 11 36 47" style="fill:#9dc1e4;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<line x1="32" y1="1" x2="32" y2="4" style="fill:none;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<polygon points="32 46 24 46 24 37 28 30 32 37 32 46" style="fill:#ffffff;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<polygon points="40 46 32 46 32 37 36 30 40 37 40 46" style="fill:#ffffff;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<rect x="24" y="46" width="8" height="3" style="fill:#9dc1e4;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<rect x="32" y="46" width="8" height="3" style="fill:#9dc1e4;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<rect x="24" y="49" width="8" height="3" style="fill:#e66353;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<rect x="32" y="49" width="8" height="3" style="fill:#e66353;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<rect x="28" y="18" width="8" height="7" style="fill:#ffffff;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-<path d="M41,60.089v-.567A2.522,2.522,0,0,0,38.478,57H34V52H30v5H25.522A2.522,2.522,0,0,0,23,59.522v.567a2.642,2.642,0,0,0-2,2.558V63H43v-.353A2.642,2.642,0,0,0,41,60.089Z" style="fill:#ffe8dc;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
-</g>
-</svg>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg height="800px" width="800px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 512 512" xml:space="preserve">
+<path style="fill:#2F6EAE;" d="M319.401,117.218c6.291,0,12.041-3.559,14.847-9.191c2.805-5.631,2.184-12.364-1.605-17.387
+	L269.241,6.597C266.107,2.443,261.204,0,256,0c-5.205,0-10.107,2.443-13.242,6.597l-63.401,84.043
+	c-3.789,5.023-4.41,11.756-1.605,17.387s8.556,9.191,14.847,9.191H319.401z"/>
+<path style="fill:#275A91;" d="M319.401,117.218c6.291,0,12.041-3.559,14.847-9.191c2.805-5.631,2.184-12.364-1.605-17.387
+	L269.241,6.597C266.107,2.443,261.204,0,256,0v117.218H319.401z"/>
+<path style="fill:#224E7D;" d="M179.357,90.641c-3.789,5.023-4.41,11.756-1.605,17.387s8.556,9.191,14.847,9.191h126.802
+	c6.291,0,12.041-3.559,14.847-9.191c2.805-5.631,2.184-12.364-1.605-17.387l-13.529-17.932H192.885L179.357,90.641z"/>
+<path style="fill:#2F6EAE;" d="M308.635,416.048l-5.529-57.503c-0.818-8.507-7.965-14.999-16.511-14.999h-61.189
+	c-8.546,0-15.693,6.493-16.511,14.999l-5.529,57.503c-0.448,4.654,1.09,9.281,4.234,12.741c3.144,3.46,7.601,5.434,12.277,5.434
+	h72.247c4.675,0,9.134-1.973,12.278-5.434C307.545,425.329,309.082,420.703,308.635,416.048z"/>
+<path style="fill:#275A91;" d="M308.635,416.048l-5.529-57.503c-0.818-8.507-7.965-14.999-16.511-14.999H256v90.678h36.124
+	c4.675,0,9.134-1.973,12.278-5.434C307.545,425.329,309.082,420.703,308.635,416.048z"/>
+<path style="fill:#E78600;" d="M176.011,100.631v259.502c0,9.161,7.427,16.587,16.587,16.587h126.802
+	c9.161,0,16.587-7.427,16.587-16.587V100.631H176.011z"/>
+<path style="fill:#C57300;" d="M256,100.631v276.09h63.401c9.161,0,16.587-7.427,16.587-16.587V100.631H256z"/>
+<path style="fill:#D3E6F7;" d="M272.587,195.732c0,9.161-7.427,16.587-16.587,16.587s-16.587-7.427-16.587-16.587v-55.292
+	c0-9.161,7.427-16.587,16.587-16.587s16.587,7.427,16.587,16.587V195.732z"/>
+<g>
+	<circle style="fill:#57565C;" cx="256" cy="253.6" r="16.956"/>
+	<circle style="fill:#57565C;" cx="256" cy="305.574" r="16.956"/>
+</g>
+<path style="fill:#9CC8EF;" d="M229.46,461.408c-3.665,0-6.635,2.97-6.635,6.635v10.782h-44.104
+	c0.992-3.705,1.529-7.594,1.529-11.611c0-23.608-18.271-42.936-41.441-44.649c0.164-1.621,0.249-3.266,0.249-4.93
+	c0-26.719-21.661-48.38-48.38-48.38c-26.07,0-47.313,20.623-48.331,46.443c-23.602,3.215-41.794,23.438-41.794,47.922
+	c0,24.753,18.595,45.151,42.575,48.021c0,0,187.546,0.359,196.285,0.359c9.161,0,16.587-7.427,16.587-16.587v-34.004H229.46z"/>
+<path style="fill:#66A8E5;" d="M511.447,463.62c0-24.484-18.192-44.708-41.794-47.922c-1.018-25.82-22.262-46.443-48.331-46.443
+	c-26.72,0-48.38,21.661-48.38,48.38c0,1.664,0.084,3.309,0.249,4.93c-23.171,1.713-41.441,21.041-41.441,44.649
+	c0,4.017,0.537,7.907,1.528,11.611h-44.103v-5.151c0-6.774-5.492-12.266-12.266-12.266H256v34.004
+	c0,9.161,7.427,16.587,16.587,16.587c6.992,0,196.285-0.359,196.285-0.359C492.853,508.771,511.447,488.373,511.447,463.62z"/>
+<polygon style="fill:#224E7D;" points="205.303,395.888 306.697,395.888 304.853,376.72 207.147,376.72 "/>
+<path style="fill:#B7D8F3;" d="M256,123.853v88.467c9.161,0,16.587-7.427,16.587-16.587v-55.292
+	C272.587,131.28,265.161,123.853,256,123.853z"/>
+<g>
+	<path style="fill:#46454A;" d="M256,236.648v33.913c9.364,0,16.956-7.592,16.956-16.956
+		C272.956,244.241,265.364,236.648,256,236.648z"/>
+	<path style="fill:#46454A;" d="M256,288.622v33.913c9.364,0,16.956-7.592,16.956-16.956
+		C272.956,296.214,265.364,288.622,256,288.622z"/>
+</g>
+</svg>
