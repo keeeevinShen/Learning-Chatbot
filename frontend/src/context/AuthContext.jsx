@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true); // Set loading to true when login starts
     try {
-      const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/api/auth/login`, {
+      const response = await fetch(`/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/api/auth/logout`, {
+      const response = await fetch(`/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
         headers: {

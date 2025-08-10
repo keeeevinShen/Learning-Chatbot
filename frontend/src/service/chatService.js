@@ -12,7 +12,7 @@ export const fetchChats = async () => {
 // New function to fetch recent threads from backend
 export const fetchRecentThreads = async () => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/api/threads`, {
+    const response = await fetch(`/api/threads`, {
       method: 'GET',
       credentials: 'include', // Include cookies for authentication
       headers: {
@@ -40,7 +40,7 @@ export const fetchThreadHistory = async (threadId) => {
   try {
     console.log('🔍 Fetching thread history for:', threadId);
     
-    const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/thread_history/${threadId}`, {
+    const response = await fetch(`/api/thread_history/${threadId}`, {
       method: 'GET',
       credentials: 'include', // Include cookies for authentication
       headers: {
@@ -68,7 +68,7 @@ export const importLecture = async (lectureUrl) => {
   try {
     console.log('🚀 Making request to backend with URL:', lectureUrl);
     
-    const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/transcript`, {
+    const response = await fetch(`/api/transcript`, {
       method: 'POST',
       credentials: 'include', // Include cookies for authentication
       headers: {

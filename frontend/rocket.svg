@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg width="800px" height="800px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<title>rocket</title>
+<g id="rocket">
+<circle cx="34" cy="28" r="23" style="fill:#edebdc"/>
+<line x1="51" y1="9" x2="51" y2="11" style="fill:none;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<line x1="51" y1="15" x2="51" y2="17" style="fill:none;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<line x1="47" y1="13" x2="49" y2="13" style="fill:none;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<line x1="53" y1="13" x2="55" y2="13" style="fill:none;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<circle cx="57.251" cy="28.232" r="1.069" style="fill:#4c241d"/>
+<circle cx="19.251" cy="13.232" r="1.069" style="fill:#4c241d"/>
+<circle cx="10.251" cy="24.232" r="1.069" style="fill:#4c241d"/>
+<circle cx="5.251" cy="43.232" r="1.069" style="fill:#4c241d"/>
+<circle cx="22.251" cy="29.232" r="1.069" style="fill:#4c241d"/>
+<circle cx="45.251" cy="23.232" r="1.069" style="fill:#4c241d"/>
+<circle cx="52.251" cy="47.232" r="1.069" style="fill:#4c241d"/>
+<circle cx="10.251" cy="10.232" r="1.069" style="fill:#4c241d"/>
+<polygon points="36 47 28 47 28 11 32 4 36 11 36 47" style="fill:#9dc1e4;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<line x1="32" y1="1" x2="32" y2="4" style="fill:none;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<polygon points="32 46 24 46 24 37 28 30 32 37 32 46" style="fill:#ffffff;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<polygon points="40 46 32 46 32 37 36 30 40 37 40 46" style="fill:#ffffff;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<rect x="24" y="46" width="8" height="3" style="fill:#9dc1e4;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<rect x="32" y="46" width="8" height="3" style="fill:#9dc1e4;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<rect x="24" y="49" width="8" height="3" style="fill:#e66353;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<rect x="32" y="49" width="8" height="3" style="fill:#e66353;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<rect x="28" y="18" width="8" height="7" style="fill:#ffffff;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+<path d="M41,60.089v-.567A2.522,2.522,0,0,0,38.478,57H34V52H30v5H25.522A2.522,2.522,0,0,0,23,59.522v.567a2.642,2.642,0,0,0-2,2.558V63H43v-.353A2.642,2.642,0,0,0,41,60.089Z" style="fill:#ffe8dc;stroke:#4c241d;stroke-linecap:round;stroke-linejoin:round;stroke-width:2px"/>
+</g>
+</svg>

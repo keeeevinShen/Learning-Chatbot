@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+.yarn
+.pnpm-store
+.cache
+build
+dist
+.DS_Store
+.git
+.vscode
+.idea
+**/*.local

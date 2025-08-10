@@ -244,7 +244,7 @@ const ChatPage = () => {
       formData.append('message', inputValue);
       formData.append('thread_id', currentChat.id);
   
-      const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/simplechat`, {
+      const response = await fetch(`/api/simplechat`, {
         method: 'POST',
         credentials: 'include',
         body: formData,

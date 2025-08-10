@@ -64,7 +64,7 @@ const GoogleCallback = () => {
         console.log('Google callback - Authorization code received, sending to backend');
         
         // Send the authorization code to your backend
-        const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/api/auth/google`, {
+        const response = await fetch(`/api/auth/google`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

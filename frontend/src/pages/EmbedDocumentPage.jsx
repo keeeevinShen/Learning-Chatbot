@@ -48,7 +48,7 @@ const EmbedDocumentPage = () => {
       formData.append('metadata_0', JSON.stringify(metadata));
 
       // Send to backend (replace with your actual endpoint)
-      const response = await fetch(`${import.meta.env.VITE_SERVER_ADDRESS}/embed-documents`, {
+      const response = await fetch(`/api/embed-documents`, {
         method: 'POST',
         credentials: 'include', // Include cookies for authentication
         body: formData, // Browser will set Content-Type with boundary automatically
