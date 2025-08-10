@@ -4,6 +4,7 @@ from ..dependencies import get_app_graph
 
 
 router = APIRouter(
+    prefix="/api",
     tags=["thread"]
 )
 

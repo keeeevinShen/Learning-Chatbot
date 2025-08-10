@@ -9,7 +9,7 @@ from ..dependencies import get_app_graph
 from .auth_dependencies import *
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(prefix="/api")
 
 @router.post("/simplechat")
 async def chat_with_agent(
@@ -43,8 +43,8 @@ async def chat_with_agent(
                 
                 # Focus only on events where nodes finish running
                 if kind == "on_chain_end":
-                    node_name = event["name"] # In v1, the node name is in the 'name' field
-                    node_data = event["data"].get("output")
+                    node_name = event["name"]  # In v1, the node name is in the 'name' field
+                    node_data = (event.get("data") or {}).get("output") or {}
 
                     # Skip if there's no output data
                     if not node_data:
@@ -64,14 +64,16 @@ async def chat_with_agent(
                         if error:
                             yield f"data: ❌ **Error:** {error}\n\n"
                         else:
-                            latest_message = node_data.get("history_messages", [])[-1]
-                            if isinstance(latest_message, AIMessage):
-                                response_text = latest_message.content or ""
-                                # SSE requires each line of data to be prefixed with 'data:'
-                                for line in response_text.splitlines():
-                                    yield f"data: {line}\n"
-                                # End of one SSE message event
-                                yield "\n"
+                            messages = node_data.get("history_messages") or []
+                            if messages:
+                                latest_message = messages[-1]
+                                if isinstance(latest_message, AIMessage):
+                                    response_text = latest_message.content or ""
+                                    # SSE requires each line of data to be prefixed with 'data:'
+                                    for line in response_text.splitlines():
+                                        yield f"data: {line}\n"
+                                    # End of one SSE message event
+                                    yield "\n"
 
                         if node_data.get("learning_complete", False):
                             congrats_text = "🎉 **Congratulations!** You've mastered all the learning checkpoints!"

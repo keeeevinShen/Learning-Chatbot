@@ -9,7 +9,7 @@ import asyncio
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/knowledge",
+    prefix="/api/knowledge",
     tags=["knowledge"]
 )
 

@@ -10,6 +10,7 @@ class LectureRequest(BaseModel):
     lecture_url: str
 
 router = APIRouter(
+    prefix="/api",
     tags=["Lectures"]
 )
 

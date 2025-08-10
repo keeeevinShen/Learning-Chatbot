@@ -1,18 +1,68 @@
-version: '3.8'
-
 services:
+  # --- Backend Service (Your Python App) ---
   backend:
-    build: ./backend
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:80"
-    volumes:
-      - ./frontend/src:/app/src
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    # Wait for PostgreSQL to be healthy before starting the backend
     depends_on:
-      - backend
+      db:
+        condition: service_healthy
+    # This section saves your vector DB and checkpoint file outside the container.
+    volumes:
+      - chroma_data:/app/chroma_db
+      - ./backend/checkpoints.sqlite:/app/checkpoints.sqlite
+
+  # --- Frontend Service (React/Vite) ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+
+  # --- Nginx Reverse Proxy (The "Front Door") ---
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    # Ensure backend is started and database is healthy before nginx
+    depends_on:
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_started
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # --- ADDED: PostgreSQL Database Service ---
+  db:
+    image: postgres:13
+    # This tells the container to load its setup variables from the .env file.
+    env_file:
+      - .env.docker
+    # This section saves your PostgreSQL data outside the container.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # You generally don't need to expose the database port to the public internet.
+    # The other containers can reach it through the private Docker network.
+    restart: unless-stopped
+
+# --- ADDED: Define the persistent storage volumes ---
+volumes:
+  postgres_data:
+  chroma_data:
