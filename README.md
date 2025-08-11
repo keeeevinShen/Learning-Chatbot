@@ -29,3 +29,7 @@ A full-stack AI-powered web app that helps students quickly learn new material a
 ## Agent workflow
 
 ![Agent workflow](agent_workflow.png)
+
+## Feynman mode agent workflow
+
+![Feynman mode agent workflow](feynman_mode_agent.png)
