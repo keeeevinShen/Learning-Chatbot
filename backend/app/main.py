@@ -8,12 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 # --- LangGraph Imports ---
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from .graph.graph import get_graph
+from .graph.feynman_graph import get_graph as get_feynman_graph
 
 # --- App Module Imports ---
 from app.core.log_config import setup_logging
 # CHANGE: Import the shared resources dictionary from the new dependencies file
 from .dependencies import shared_resources
-from .routers import lecture_transcript_router, google_login_router, logout_router, simpleChat_router, traditional_login_router,get_thread_history_router,get_thread_router
+from .routers import lecture_transcript_router, google_login_router, logout_router, simpleChat_router, traditional_login_router,get_thread_history_router,get_thread_router, feynman__router
 from .database.session import create_tables
 
 # Run setup functions
@@ -39,7 +40,8 @@ async def lifespan(app: FastAPI):
         # 3. Build the graph once using the checkpointer
         #    and store it in the shared dictionary from the dependencies module
         shared_resources["graph"] = get_graph(db_checkpoint)
-        logger.info("LangGraph agent has been built and is ready.")
+        shared_resources["feynman_graph"] = get_feynman_graph(db_checkpoint)
+        logger.info("LangGraph agents (default and feynman) have been built and are ready.")
         
         yield # The app is now running and accepting requests
 
@@ -71,6 +73,7 @@ app.include_router(lecture_transcript_router.router)
 app.include_router(google_login_router.router)
 app.include_router(logout_router.router)
 app.include_router(simpleChat_router.router)
+app.include_router(feynman__router.router)
 app.include_router(traditional_login_router.router)
 app.include_router(get_thread_history_router.router)
 app.include_router(get_thread_router.router)
