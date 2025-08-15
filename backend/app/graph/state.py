@@ -26,4 +26,8 @@ class AgentState(TypedDict):
     learning_complete: bool = False
     error: Optional[str]
 
+    # Feynman agent specific transient flags
+    needs_more_context: bool
+    context_focus: Optional[str]
+
     

@@ -24,7 +24,8 @@ RUN pip wheel --wheel-dir /wheels -r requirements.txt
 FROM python:3.11-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 WORKDIR /app
 
@@ -35,8 +36,34 @@ RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 COPY --from=builder /wheels /wheels
 RUN pip install --no-cache-dir --no-index --find-links=/wheels /wheels/* && rm -rf /wheels
 
-# Install Playwright Chromium and its OS dependencies for lecture transcript scraping
-RUN python -m playwright install --with-deps chromium
+# Install system dependencies required by Chromium on Debian, then install Chromium via Playwright
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnss3 \
+    libxss1 \
+    libatk-bridge2.0-0 \
+    libgtk-3-0 \
+    libdrm2 \
+    libgbm1 \
+    libasound2 \
+    libpangocairo-1.0-0 \
+    libcups2 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libxshmfence1 \
+    libxkbcommon0 \
+    libglib2.0-0 \
+    fonts-liberation \
+    fonts-unifont \
+    xdg-utils \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Chromium browser binaries without attempting OS-level deps (handled above)
+RUN python -m playwright install chromium && \
+    mkdir -p /ms-playwright && \
+    chown -R appuser:appgroup /ms-playwright
 
 # Copy application code after deps to leverage layer caching
 COPY . /app
